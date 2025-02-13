@@ -5,5 +5,11 @@ export const COLORS = {
 };
 
 export const FIREBASE_CONFIG = {
-  // Your Firebase config (can import from firebase.js or define here)
+  apiKey: "AIzaSyAjdJBRr_7g7yUBG9wh5YXZsN9EtnSRCL8",
+  authDomain: "chatapp-ae50a.firebaseapp.com",
+  projectId: "chatapp-ae50a",
+  storageBucket: "chatapp-ae50a.firebasestorage.app",
+  messagingSenderId: "401255650193",
+  appId: "1:401255650193:web:643497b154e9193aacc030",
+  measurementId: "G-3NM6D5DKCZ",
 };

@@ -1,15 +1,15 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 
-export default function MessageBubble({ text, sender }) {
+export default function MessageBubble({ currentMessage }) {
   return (
     <View
       style={[
         styles.bubble,
-        sender === "me" ? styles.bubbleRight : styles.bubbleLeft,
+        currentMessage.user._id === 1 ? styles.rightBubble : styles.leftBubble,
       ]}
     >
-      <Text style={styles.text}>{text}</Text>
+      <Text style={styles.text}>{currentMessage.text}</Text>
     </View>
   );
 }
@@ -19,12 +19,13 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 15,
     margin: 5,
+    maxWidth: "75%",
   },
-  bubbleLeft: {
+  leftBubble: {
     backgroundColor: "#e1ffc7",
     alignSelf: "flex-start",
   },
-  bubbleRight: {
+  rightBubble: {
     backgroundColor: "#d3f3ff",
     alignSelf: "flex-end",
   },

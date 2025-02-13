@@ -1,18 +1,27 @@
 import React from "react";
-import { createStackNavigator } from "@react-navigation/stack";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import HomeScreen from "../app/screens/homeScreen";
 import ChatScreen from "../app/screens/chatScreen";
-import { NavigationContainer } from "@react-navigation/native";
+import ProfileScreen from "../app/screens/profileScreen";
 
-const Stack = createStackNavigator();
+const Stack = createNativeStackNavigator();
 
-export default function AppNavigator() {
+export default function AppNavigator({ db, storage, auth, isConnected }) {
   return (
-    <NavigationContainer>
-      <Stack.Navigator initialRouteName="Home">
-        <Stack.Screen name="Home" component={HomeScreen} />
-        <Stack.Screen name="Chat" component={ChatScreen} />
-      </Stack.Navigator>
-    </NavigationContainer>
+    <Stack.Navigator initialRouteName="Start">
+      <Stack.Screen name="Start" component={HomeScreen} />
+      <Stack.Screen name="Chat">
+        {(props) => (
+          <ChatScreen
+            {...props}
+            db={db}
+            storage={storage}
+            auth={auth}
+            isConnected={isConnected}
+          />
+        )}
+      </Stack.Screen>
+      <Stack.Screen name="Profile" component={ProfileScreen} />
+    </Stack.Navigator>
   );
 }

@@ -1,42 +1,57 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { GiftedChat } from "react-native-gifted-chat";
 import { SafeAreaView } from "react-native-safe-area-context";
-import firebase from "../services/firebase";
+import {
+  collection,
+  addDoc,
+  onSnapshot,
+  query,
+  orderBy,
+  serverTimestamp,
+} from "firebase/firestore";
+import CustomActions from "../components/customAction";
+import MessageBubble from "../components/messageBubble";
 
-export default function ChatScreen({ route }) {
-  const { username } = route.params;
+export default function ChatScreen({ route, db, storage }) {
+  const { userID, name } = route.params;
   const [messages, setMessages] = useState([]);
 
   useEffect(() => {
-    setMessages([
-      {
-        _id: 1,
-        text: "Welcome to the chat!",
-        createdAt: new Date(),
-        user: {
-          _id: 2,
-          name: "React Native Bot",
-        },
-      },
-    ]);
-  }, []);
+    const q = query(collection(db, "messages"), orderBy("createdAt", "desc"));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const loadedMessages = snapshot.docs.map((doc) => {
+        const data = doc.data();
+        return {
+          _id: doc.id,
+          text: data.text || "",
+          createdAt: data.createdAt?.toDate() || new Date(),
+          user: data.user,
+        };
+      });
+      setMessages(loadedMessages);
+    });
+
+    return () => unsubscribe();
+  }, [db]);
 
   const onSend = useCallback((newMessages = []) => {
-    setMessages((previousMessages) =>
-      GiftedChat.append(previousMessages, newMessages)
-    );
-    // Store messages in Firestore or AsyncStorage
+    setMessages((prevMessages) => GiftedChat.append(prevMessages, newMessages));
+    addDoc(collection(db, "messages"), {
+      ...newMessages[0],
+      createdAt: serverTimestamp(),
+    });
   }, []);
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <GiftedChat
         messages={messages}
-        onSend={(messages) => onSend(messages)}
-        user={{
-          _id: 1,
-          name: username,
-        }}
+        onSend={onSend}
+        user={{ _id: userID, name }}
+        renderActions={(props) => (
+          <CustomActions {...props} storage={storage} userID={userID} />
+        )}
+        renderBubble={(props) => <MessageBubble {...props} />}
       />
     </SafeAreaView>
   );
