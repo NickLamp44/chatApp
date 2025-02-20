@@ -10,7 +10,7 @@ import {
 import { useActionSheet } from "@expo/react-native-action-sheet";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
-// Conditionally import native modules for mobile only
+// Conditionally import modules for image and location
 let ImagePicker, Location;
 if (Platform.OS !== "web") {
   ImagePicker = require("expo-image-picker");
@@ -45,8 +45,11 @@ const CustomActions = ({ onSend, storage, userID }) => {
       return false;
     }
     const { granted } = await permissionFunc();
-    if (!granted) Alert.alert(alertMessage);
-    return granted;
+    if (!granted) {
+      Alert.alert(alertMessage);
+      return false;
+    }
+    return true;
   };
 
   const pickImage = async () => {
@@ -59,10 +62,14 @@ const CustomActions = ({ onSend, storage, userID }) => {
     )
       return;
 
-    const result = await ImagePicker.launchImageLibraryAsync({
+    let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 1, // High quality images
     });
-    if (!result.canceled) await uploadAndSendImage(result.assets[0].uri);
+
+    if (!result.canceled) {
+      await uploadAndSendImage(result.assets[0].uri);
+    }
   };
 
   const takePhoto = async () => {
@@ -75,10 +82,14 @@ const CustomActions = ({ onSend, storage, userID }) => {
     )
       return;
 
-    const result = await ImagePicker.launchCameraAsync({
+    let result = await ImagePicker.launchCameraAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 1,
     });
-    if (!result.canceled) await uploadAndSendImage(result.assets[0].uri);
+
+    if (!result.canceled) {
+      await uploadAndSendImage(result.assets[0].uri);
+    }
   };
 
   const getLocation = async () => {
@@ -100,6 +111,7 @@ const CustomActions = ({ onSend, storage, userID }) => {
           latitude: location.coords.latitude,
           longitude: location.coords.longitude,
         },
+        createdAt: new Date(),
       });
     } else {
       Alert.alert("Error getting location.");
@@ -108,17 +120,19 @@ const CustomActions = ({ onSend, storage, userID }) => {
 
   const uploadAndSendImage = async (imageURI) => {
     try {
-      const imageName = `${userID}-${Date.now()}-${imageURI.split("/").pop()}`;
-      const storageRef = ref(storage, imageName);
       const response = await fetch(imageURI);
       const blob = await response.blob();
+      const imageName = `${userID}-${new Date().getTime()}.jpg`;
+      const storageRef = ref(storage, `images/${imageName}`);
+
       await uploadBytes(storageRef, blob);
       const downloadURL = await getDownloadURL(storageRef);
 
       onSend({
-        _id: `${Date.now()}-${userID}`,
+        _id: `${new Date().getTime()}-${userID}`,
         user: { _id: userID },
         image: downloadURL,
+        createdAt: new Date(),
       });
     } catch (error) {
       console.error("Upload failed:", error);
@@ -136,7 +150,12 @@ const CustomActions = ({ onSend, storage, userID }) => {
 };
 
 const styles = StyleSheet.create({
-  container: { width: 30, height: 30, marginLeft: 10, marginBottom: 10 },
+  container: {
+    width: 30,
+    height: 30,
+    marginLeft: 10,
+    marginBottom: 10,
+  },
   wrapper: {
     borderRadius: 15,
     borderWidth: 2,
@@ -145,7 +164,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  iconText: { color: "#000", fontSize: 16, fontWeight: "bold" },
+  iconText: {
+    color: "#000",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
 });
 
 export default CustomActions;

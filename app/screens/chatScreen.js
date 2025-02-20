@@ -77,10 +77,12 @@ const ChatScreen = ({ route, db, storage, isConnected }) => {
   const onSend = useCallback((newMessages = []) => {
     setMessages((prevMessages) => GiftedChat.append(prevMessages, newMessages));
 
-    addDoc(collection(db, "messages"), {
-      ...newMessages[0],
-      createdAt: serverTimestamp(),
-    }).catch((error) => console.error("Error sending message:", error));
+    newMessages.forEach(async (message) => {
+      await addDoc(collection(db, "messages"), {
+        ...message,
+        createdAt: serverTimestamp(),
+      });
+    });
   }, []);
 
   /**
@@ -114,7 +116,12 @@ const ChatScreen = ({ route, db, storage, isConnected }) => {
           <CustomActions {...props} storage={storage} userID={userID} />
         )}
         renderBubble={(props) => <MessageBubble {...props} />}
-        renderCustomView={renderCustomView} // Custom render function for maps
+        renderMessageImage={(props) => (
+          <Image
+            source={{ uri: props.currentMessage.image }}
+            style={{ width: 200, height: 200, borderRadius: 10 }}
+          />
+        )}
       />
     </SafeAreaView>
   );
