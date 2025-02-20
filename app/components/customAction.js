@@ -1,9 +1,21 @@
 import React from "react";
-import { TouchableOpacity, Text, View, StyleSheet, Alert } from "react-native";
+import {
+  TouchableOpacity,
+  Text,
+  View,
+  StyleSheet,
+  Alert,
+  Platform,
+} from "react-native";
 import { useActionSheet } from "@expo/react-native-action-sheet";
-import * as ImagePicker from "expo-image-picker";
-import * as Location from "expo-location";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+
+// Conditionally import native modules for mobile only
+let ImagePicker, Location;
+if (Platform.OS !== "web") {
+  ImagePicker = require("expo-image-picker");
+  Location = require("expo-location");
+}
 
 const CustomActions = ({ onSend, storage, userID }) => {
   const { showActionSheetWithOptions } = useActionSheet();
@@ -28,12 +40,17 @@ const CustomActions = ({ onSend, storage, userID }) => {
   };
 
   const requestPermission = async (permissionFunc, alertMessage) => {
+    if (Platform.OS === "web") {
+      Alert.alert("This feature is not available on Web.");
+      return false;
+    }
     const { granted } = await permissionFunc();
     if (!granted) Alert.alert(alertMessage);
     return granted;
   };
 
   const pickImage = async () => {
+    if (!ImagePicker) return;
     if (
       !(await requestPermission(
         ImagePicker.requestMediaLibraryPermissionsAsync,
@@ -42,13 +59,14 @@ const CustomActions = ({ onSend, storage, userID }) => {
     )
       return;
 
-    let result = await ImagePicker.launchImageLibraryAsync({
+    const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
     });
     if (!result.canceled) await uploadAndSendImage(result.assets[0].uri);
   };
 
   const takePhoto = async () => {
+    if (!ImagePicker) return;
     if (
       !(await requestPermission(
         ImagePicker.requestCameraPermissionsAsync,
@@ -57,13 +75,14 @@ const CustomActions = ({ onSend, storage, userID }) => {
     )
       return;
 
-    let result = await ImagePicker.launchCameraAsync({
+    const result = await ImagePicker.launchCameraAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
     });
     if (!result.canceled) await uploadAndSendImage(result.assets[0].uri);
   };
 
   const getLocation = async () => {
+    if (!Location) return;
     if (
       !(await requestPermission(
         Location.requestForegroundPermissionsAsync,
@@ -89,9 +108,7 @@ const CustomActions = ({ onSend, storage, userID }) => {
 
   const uploadAndSendImage = async (imageURI) => {
     try {
-      const imageName = `${userID}-${new Date().getTime()}-${imageURI
-        .split("/")
-        .pop()}`;
+      const imageName = `${userID}-${Date.now()}-${imageURI.split("/").pop()}`;
       const storageRef = ref(storage, imageName);
       const response = await fetch(imageURI);
       const blob = await response.blob();
@@ -99,7 +116,7 @@ const CustomActions = ({ onSend, storage, userID }) => {
       const downloadURL = await getDownloadURL(storageRef);
 
       onSend({
-        _id: `${new Date().getTime()}-${userID}`,
+        _id: `${Date.now()}-${userID}`,
         user: { _id: userID },
         image: downloadURL,
       });
@@ -119,12 +136,7 @@ const CustomActions = ({ onSend, storage, userID }) => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    width: 30,
-    height: 30,
-    marginLeft: 10,
-    marginBottom: 10,
-  },
+  container: { width: 30, height: 30, marginLeft: 10, marginBottom: 10 },
   wrapper: {
     borderRadius: 15,
     borderWidth: 2,
@@ -133,11 +145,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  iconText: {
-    color: "#000",
-    fontSize: 16,
-    fontWeight: "bold",
-  },
+  iconText: { color: "#000", fontSize: 16, fontWeight: "bold" },
 });
 
 export default CustomActions;
