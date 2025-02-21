@@ -24,7 +24,7 @@ const HomeScreen = ({ navigation }) => {
     }
     signInAnonymously(auth)
       .then((result) => {
-        navigation.navigate("Chat", {
+        navigation.replace("Main", {
           userID: result.user.uid,
           name: name,
           backgroundColor: backgroundColor,

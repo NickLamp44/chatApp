@@ -1,32 +1,12 @@
-import { initializeApp, getApps, getApp } from "firebase/app";
-import {
-  getFirestore,
-  disableNetwork,
-  enableNetwork,
-} from "firebase/firestore";
-import { getStorage } from "firebase/storage";
-import { getAuth, initializeAuth } from "firebase/auth";
-import ReactNativeAsyncStorage from "@react-native-async-storage/async-storage";
+import { initializeApp } from "firebase/app";
+import { getAuth } from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
 import { firebaseConfig } from "../../config/constants";
 
-// Ensure Firebase is initialized only once
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-
-// Firebase services
+// 🔥 Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
 const db = getFirestore(app);
-const storage = getStorage(app);
-const auth =
-  getApps().length === 0
-    ? initializeAuth(app, { persistence: ReactNativeAsyncStorage })
-    : getAuth(app);
 
-// Function to handle network toggling (removed `useNetInfo()`)
-const handleNetworkStatus = (isConnected) => {
-  if (isConnected === false) {
-    disableNetwork(db);
-  } else {
-    enableNetwork(db);
-  }
-};
-
-export { db, storage, auth, handleNetworkStatus };
+// Export Firebase instances (ONLY)
+export { auth, db };

@@ -1,21 +1,26 @@
 // signup component and functions which will then direct the user to the homeScreen.js
 
 import React, { useState } from "react";
-import { StyleSheet, Text, View, Button, TextInput } from "react-native";
-import { createUserWithEmailAndPassword } from "firebase/auth";
-import { auth } from "../config/firebase";
+import { StyleSheet, Text, View, Button, TextInput, Alert } from "react-native";
+import { registerUser } from "../services/firebaseAuth";
 
 export default function SignUp({ navigation }) {
   const [email, setEmail] = useState("");
   const [userName, setUserName] = useState("");
   const [password, setPassword] = useState("");
 
-  const onHandleSignUp = () => {
-    if (email !== "&&password!== userName!==")
-      // pass inputed UserName to DB
-      createUserWithEmailAndPassword(auth, email, password)
-        .then(() => console.log("Signup success"))
-        .catch((err) => console.log(`Login err: ${err}`));
+  const onHandleSignUp = async () => {
+    if (!email || !password || !userName) {
+      Alert.alert("Error", "Please fill in all fields.");
+      return;
+    }
+    try {
+      await registerUser(userName, email, password);
+      Alert.alert("Success!", "Account created!");
+      navigation.replace("Login");
+    } catch (error) {
+      Alert.alert("Signup Failed", error.message);
+    }
   };
   return (
     <View style={styles.container}>
@@ -27,28 +32,26 @@ export default function SignUp({ navigation }) {
         keyboardType="email-address"
         textContentType="emailAddress"
         value={email}
-        onChangeText={(text) => setEmail(text)}
+        onChangeText={setEmail}
       />
       <TextInput
         style={styles.input}
         placeholder="Enter Username"
         autoCapitalize="none"
-        keyboardType="userName"
-        textContentType="userName"
-        value={email}
-        onChangeText={(text) => setUserName(text)}
+        textContentType="username"
+        value={userName}
+        onChangeText={setUserName}
       />
       <TextInput
         style={styles.input}
         placeholder="Enter password"
         autoCapitalize="none"
-        autoCorrect={false}
         secureTextEntry={true}
         textContentType="password"
         value={password}
-        onChangeText={(text) => setPassword(text)}
+        onChangeText={setPassword}
       />
-      <Button onPress={onHandleSignup} color="#6391b7" title="Signup" />
+      <Button onPress={onHandleSignUp} color="#6391b7" title="Signup" />
       <Button
         onPress={() => navigation.navigate("Login")}
         title="Go to Login"

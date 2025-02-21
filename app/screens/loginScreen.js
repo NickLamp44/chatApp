@@ -1,49 +1,52 @@
 // login component (Email or Username & password ) Use firebase Auth to use google/apple/facebook to authenticate which will then direct the user to the homeScreen.js
-
 import React, { useState } from "react";
-import { StyleSheet, Text, View, Button, TextInput } from "react-native";
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from "../config/firebase";
+import { StyleSheet, Text, View, Button, TextInput, Alert } from "react-native";
+import {
+  loginUserWithEmail,
+  loginUserWithUsername,
+} from "../services/firebaseAuth";
 
 export default function Login({ navigation }) {
-  const [email, setEmail] = useState("");
-  const [userName, setUsername] = useState("");
+  const [input, setInput] = useState("");
   const [password, setPassword] = useState("");
 
-  const onHandleLogin = () => {
-    if (email !== "&&password!==") {
-      signInWithEmailAndPassword(auth, email, password)
-        .then(() => console.log("Login Successful"))
-        .catch((err) => console.log("Login Err: ${err"));
+  const onHandleLogin = async () => {
+    if (!input || !password) {
+      Alert.alert("Error", "Please enter your Username or Email and Password.");
+      return;
+    }
+
+    try {
+      const isEmail = input.includes("@");
+      if (isEmail) {
+        await loginUserWithEmail(input, password);
+      } else {
+        await loginUserWithUsername(input, password);
+      }
+      console.log("Login Successful");
+      navigation.navigate("Chat");
+    } catch (error) {
+      Alert.alert("Login Failed", error.message);
     }
   };
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Welcome back!</Text>
-      {/* will accept either email or username for login */}
       <TextInput
         style={styles.input}
-        placeholder="Enter Email or Username "
+        placeholder="Enter Email or Username"
         autoCapitalize="none"
-        keyboardType="email-address"
-        textContentType="emailAddress"
-        autoFocus={true}
-        value={email}
-        onChangeText={(text) => setEmail(text)}
-        // Need to implement funciton to detect if a user has submitted a username or email
+        value={input}
+        onChangeText={setInput}
       />
       <TextInput
         style={styles.input}
         placeholder="Enter password"
-        autoCapitalize="none"
-        autoCorrect={false}
         secureTextEntry={true}
-        textContentType="password"
         value={password}
-        onChangeText={(text) => setPassword(text)}
+        onChangeText={setPassword}
       />
-
-      {/* Placeholder for component allowing Google/Apple/Facebook Auth using firebase */}
       <Button onPress={onHandleLogin} color="#444daf" title="Login" />
       <Button
         onPress={() => navigation.navigate("Signup")}
