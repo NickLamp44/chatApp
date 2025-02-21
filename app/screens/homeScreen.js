@@ -47,6 +47,7 @@ const HomeScreen = ({ navigation }) => {
 
   const colors = ["#090C08", "#474056", "#8A95A5", "#B9C6AE"];
 
+  // still need to implement navMenu
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}
@@ -61,6 +62,7 @@ const HomeScreen = ({ navigation }) => {
           <View style={styles.contentContainer}>
             <Text style={styles.title}>Welcome to ChatApp!</Text>
             <View style={styles.inputContainer}>
+              {/* conditional if the userID is passed from the login / authentication process */}
               <TextInput
                 style={styles.textInput}
                 value={name}

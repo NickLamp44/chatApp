@@ -4,7 +4,7 @@ export const COLORS = {
   background: "#F5F5F5",
 };
 
-export const FIREBASE_CONFIG = {
+export const firebaseConfig = {
   apiKey: "AIzaSyAjdJBRr_7g7yUBG9wh5YXZsN9EtnSRCL8",
   authDomain: "chatapp-ae50a.firebaseapp.com",
   projectId: "chatapp-ae50a",

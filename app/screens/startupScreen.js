@@ -1,0 +1,1 @@
+// Use firebase Auth to either continue as a registered user  OR Create a new user OR they can continue Anonymously. All ofwhich will send them to the home page where they can join chats, start new ones, or if anonymous continue with only entering a username for the chat

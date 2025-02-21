@@ -7,10 +7,10 @@ import {
 import { getStorage } from "firebase/storage";
 import { getAuth, initializeAuth } from "firebase/auth";
 import ReactNativeAsyncStorage from "@react-native-async-storage/async-storage";
-import { FIREBASE_CONFIG } from "../../config/constants";
+import { firebaseConfig } from "../../config/constants";
 
 // Ensure Firebase is initialized only once
-const app = !getApps().length ? initializeApp(FIREBASE_CONFIG) : getApp();
+const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
 // Firebase services
 const db = getFirestore(app);
