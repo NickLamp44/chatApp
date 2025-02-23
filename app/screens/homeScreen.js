@@ -10,34 +10,36 @@ import {
   Platform,
   Alert,
 } from "react-native";
+import { useNavigation } from "@react-navigation/native";
 import { getAuth, signInAnonymously } from "firebase/auth";
 
-const HomeScreen = ({ navigation }) => {
+const HomeScreen = () => {
   const [name, setName] = useState("");
   const [backgroundColor, setBackgroundColor] = useState("#090C08");
+  const navigation = useNavigation();
   const auth = getAuth();
 
-  const signInUser = () => {
+  const signInUser = async () => {
     if (!name.trim()) {
-      Alert.alert("Please enter a name before proceeding.");
+      Alert.alert("⚠️ Error", "Please enter a name before proceeding.");
       return;
     }
-    signInAnonymously(auth)
-      .then((result) => {
-        navigation.replace("Main", {
-          userID: result.user.uid,
-          name: name,
-          backgroundColor: backgroundColor,
-        });
-        Alert.alert("Signed in successfully!");
-      })
-      .catch((error) => {
-        console.error("Error during anonymous sign-in:", error);
-        Alert.alert("Unable to sign in. Please try again later.");
+
+    try {
+      const result = await signInAnonymously(auth);
+      navigation.replace("Chat", {
+        userID: result.user.uid,
+        name: name,
+        backgroundColor: backgroundColor,
       });
+      Alert.alert("✅ Success", "Signed in as a guest!");
+    } catch (error) {
+      console.error("🔥 Error during anonymous sign-in:", error);
+      Alert.alert("❌ Sign-in Failed", "Please try again later.");
+    }
   };
 
-  // Handle Enter key submission or line breaks using Shift + Enter
+  // Handle Enter key submission for better UX
   const handleKeyPress = (e) => {
     if (e.nativeEvent.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -47,52 +49,60 @@ const HomeScreen = ({ navigation }) => {
 
   const colors = ["#090C08", "#474056", "#8A95A5", "#B9C6AE"];
 
-  // still need to implement navMenu
   return (
     <KeyboardAvoidingView
-      style={{ flex: 1 }}
+      style={styles.container}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
-      <View style={styles.container}>
-        <ImageBackground
-          source={require("../../images/Background.png")}
-          style={styles.background}
-          resizeMode="cover"
-        >
-          <View style={styles.contentContainer}>
-            <Text style={styles.title}>Welcome to ChatApp!</Text>
-            <View style={styles.inputContainer}>
-              {/* conditional if the userID is passed from the login / authentication process */}
-              <TextInput
-                style={styles.textInput}
-                value={name}
-                onChangeText={setName}
-                placeholder="Enter Your Name"
-                placeholderTextColor="#757083"
-                onKeyPress={handleKeyPress}
-                multiline={true}
-              />
-              <Text style={styles.colorText}>Choose Background Color:</Text>
-              <View style={styles.colorContainer}>
-                {colors.map((color) => (
-                  <TouchableOpacity
-                    key={color}
-                    style={[
-                      styles.colorOption,
-                      { backgroundColor: color },
-                      backgroundColor === color && styles.selectedColor,
-                    ]}
-                    onPress={() => setBackgroundColor(color)}
-                  />
-                ))}
-              </View>
-              <TouchableOpacity style={styles.button} onPress={signInUser}>
-                <Text style={styles.buttonText}>Start Chatting</Text>
-              </TouchableOpacity>
+      <ImageBackground
+        source={require("../../images/Background.png")}
+        style={styles.background}
+        resizeMode="cover"
+      >
+        <View style={styles.contentContainer}>
+          <Text style={styles.title}>Welcome to ChatApp!</Text>
+          <View style={styles.inputContainer}>
+            <TextInput
+              style={styles.textInput}
+              value={name}
+              onChangeText={setName}
+              placeholder="Enter Your Name"
+              placeholderTextColor="#757083"
+              onKeyPress={handleKeyPress}
+              multiline={true}
+              accessibilityLabel="Enter your name"
+            />
+            <Text style={styles.colorText}>Choose Background Color:</Text>
+            <View style={styles.colorContainer}>
+              {colors.map((color) => (
+                <TouchableOpacity
+                  key={color}
+                  style={[
+                    styles.colorOption,
+                    { backgroundColor: color },
+                    backgroundColor === color && styles.selectedColor,
+                  ]}
+                  onPress={() => setBackgroundColor(color)}
+                  accessibilityLabel={`Select background color ${color}`}
+                />
+              ))}
             </View>
+
+            {/* To Chat Screen */}
+            <TouchableOpacity style={styles.button} onPress={signInUser}>
+              <Text style={styles.buttonText}>Start Chatting</Text>
+            </TouchableOpacity>
+
+            {/* To Login Screen */}
+            <TouchableOpacity
+              style={[styles.button, styles.loginButton]}
+              onPress={() => navigation.navigate("Login")}
+            >
+              <Text style={styles.buttonText}>Login with Account</Text>
+            </TouchableOpacity>
           </View>
-        </ImageBackground>
-      </View>
+        </View>
+      </ImageBackground>
     </KeyboardAvoidingView>
   );
 };
@@ -103,7 +113,6 @@ const styles = StyleSheet.create({
   },
   background: {
     flex: 1,
-    resizeMode: "cover",
     justifyContent: "center",
   },
   contentContainer: {
@@ -134,7 +143,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "300",
     color: "#757083",
-    opacity: 0.5,
+    opacity: 0.8,
   },
   colorText: {
     fontSize: 16,
@@ -154,14 +163,19 @@ const styles = StyleSheet.create({
     borderRadius: 25,
   },
   selectedColor: {
-    borderWidth: 2,
-    borderColor: "#757083",
+    borderWidth: 3,
+    borderColor: "#000",
   },
   button: {
     backgroundColor: "#757083",
     padding: 15,
     borderRadius: 10,
     alignItems: "center",
+    width: "100%",
+    marginVertical: 5,
+  },
+  loginButton: {
+    backgroundColor: "#4CAF50",
   },
   buttonText: {
     color: "#FFFFFF",
