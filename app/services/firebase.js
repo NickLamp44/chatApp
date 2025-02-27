@@ -5,13 +5,13 @@ import { firebaseConfig } from "../../config/constants";
 
 // 🔥 Initialize Firebase
 const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
+// const auth = getAuth(app);
 const db = getFirestore(app);
-signInAnonymously(auth).catch(console.error);
+// signInAnonymously(auth).catch(console.error);
 
 console.log("🔥 Firebase 🔥 Initialized:", app);
 console.log("✅ Firestore DB:", db);
-console.log("✅ Firebase Auth:", auth);
+// console.log("✅ Firebase Auth:", auth);
 
 // Export Firebase instances (ONLY)
-export { auth, db };
+export { db };

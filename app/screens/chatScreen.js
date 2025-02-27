@@ -14,7 +14,6 @@ import {
   updateDoc,
   arrayUnion,
 } from "firebase/firestore";
-import { db } from "../services/firebase";
 
 // Import components
 import CustomActions from "../components/customAction";
@@ -29,11 +28,11 @@ if (Platform.OS !== "web") {
   }
 }
 
-const ChatScreen = ({ route, storage, isConnected }) => {
+const ChatScreen = ({ route, storage, isConnected, db }) => {
   const { userID, name } = route.params;
   const [messages, setMessages] = useState([]);
 
-  console.log("🔥 Firestore DB Instance:", db);
+  console.log("ChatScreen: 🔥 Firestore DB Instance:", db);
 
   useEffect(() => {
     if (!db) {
@@ -64,54 +63,61 @@ const ChatScreen = ({ route, storage, isConnected }) => {
       );
     });
 
-    return () => unsubscribe();
-  }, [db, isConnected]);
-
-  const onSend = useCallback(
-    async (newMessages = []) => {
-      setMessages((prevMessages) =>
-        GiftedChat.append(prevMessages, newMessages)
-      );
-
-      try {
-        await Promise.all(
-          newMessages.map(async (message) => {
-            const formattedUser = message.user
-              ? message.user
-              : { _id: userID, name: name || "Unknown" };
-
-            const messageRef = await addDoc(collection(db, "Messages"), {
-              _id: message._id,
-              text: message.text || "",
-              createdAt: serverTimestamp(),
-              user: formattedUser,
-            });
-
-            console.log(
-              "✅ Message successfully added to Firestore:",
-              messageRef.id
-            );
-
-            const userRef = doc(db, "Users", userID);
-            await updateDoc(userRef, {
-              messages: arrayUnion(messageRef.id),
-            });
-
-            console.log("✅ User document updated with new message ID.");
-          })
-        );
-      } catch (error) {
-        console.error("❌ Error sending messages:", error);
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
       }
-    },
-    [userID, name]
-  );
+    };
+  }, [isConnected]);
 
+  // const onSend = useCallback(
+  //   async (newMessages = []) => {
+  //     setMessages((prevMessages) =>
+  //       GiftedChat.append(prevMessages, newMessages)
+  //     );
+
+  //     try {
+  //       await Promise.all(
+  //         newMessages.map(async (message) => {
+  //           const formattedUser = message.user
+  //             ? message.user
+  //             : { _id: userID, name: name || "Unknown" };
+
+  //           const messageRef = await addDoc(collection(db, "Messages"), {
+  //             _id: message._id,
+  //             text: message.text || "",
+  //             createdAt: serverTimestamp(),
+  //             user: formattedUser,
+  //           });
+
+  //           console.log(
+  //             "✅ Message successfully added to Firestore:",
+  //             messageRef.id
+  //           );
+
+  //           const userRef = doc(db, "Users", userID);
+  //           await updateDoc(userRef, {
+  //             messages: arrayUnion(messageRef.id),
+  //           });
+
+  //           console.log("✅ User document updated with new message ID.");
+  //         })
+  //       );
+  //     } catch (error) {
+  //       console.error("❌ Error sending messages:", error);
+  //     }
+  //   },
+  //   [userID, name]
+  // );
+
+  const onSend = (newMessages) => {
+    addDoc(collection(db, "Messages"), newMessages[0]);
+  };
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <GiftedChat
         messages={messages}
-        onSend={onSend}
+        onSend={(messages) => onSend(messages)}
         user={{ _id: userID, name }}
         renderActions={(props) => (
           <CustomActions {...props} storage={storage} userID={userID} />
