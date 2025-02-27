@@ -5,7 +5,9 @@ const MessageBubble = ({ currentMessage }) => (
   <View
     style={[
       styles.bubble,
-      currentMessage.user._id === 1 ? styles.rightBubble : styles.leftBubble,
+      currentMessage.user._id === userId
+        ? styles.rightBubble
+        : styles.leftBubble,
     ]}
   >
     <Text style={styles.text}>{currentMessage.text}</Text>

@@ -51,9 +51,9 @@ const ChatScreen = ({ route, storage, isConnected, db }) => {
     const unsubscribe = onSnapshot(q, async (snapshot) => {
       const loadedMessages = snapshot.docs.map((doc) => ({
         _id: doc.id,
-        text: doc.data().text || "",
-        createdAt: doc.data().createdAt?.toDate() || new Date(),
-        user: doc.data().user,
+        text: data.text || "",
+        createdAt: data.createdAt?.toDate() || new Date(),
+        user: data.user || { _id: "unknown", name: "Unknown" },
       }));
 
       setMessages(loadedMessages);
@@ -63,11 +63,7 @@ const ChatScreen = ({ route, storage, isConnected, db }) => {
       );
     });
 
-    return () => {
-      if (unsubscribe) {
-        unsubscribe();
-      }
-    };
+    return () => unsubscribe();
   }, [isConnected]);
 
   // const onSend = useCallback(
@@ -110,8 +106,23 @@ const ChatScreen = ({ route, storage, isConnected, db }) => {
   //   [userID, name]
   // );
 
-  const onSend = (newMessages) => {
-    addDoc(collection(db, "Messages"), newMessages[0]);
+  const onSend = async (newMessages = []) => {
+    const messagesToStore = newMessages.map((msg) => ({
+      _id: msg._id,
+      text: msg.text || "",
+      createdAt: serverTimestamp(),
+      user: msg.user || { _id: userID, name },
+    }));
+
+    try {
+      await Promise.all(
+        messagesToStore.map((message) =>
+          addDoc(collection(db, "Messages"), message)
+        )
+      );
+    } catch (error) {
+      console.error("❌ Error sending message:", error);
+    }
   };
   return (
     <SafeAreaView style={{ flex: 1 }}>
@@ -123,6 +134,7 @@ const ChatScreen = ({ route, storage, isConnected, db }) => {
           <CustomActions {...props} storage={storage} userID={userID} />
         )}
         renderBubble={(props) => <MessageBubble {...props} />}
+        renderAvatar={() => null}
       />
     </SafeAreaView>
   );
