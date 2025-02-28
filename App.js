@@ -2,7 +2,7 @@ import React, { useEffect } from "react";
 import { Alert } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import AppNavigator from "./app/navigation/appNavigator";
-import { useNetInfo } from "@react-native-community/netinfo";
+import NetInfo, { useNetInfo } from "@react-native-community/netinfo";
 import { db, storage } from "./app/services/firebase";
 
 const App = () => {

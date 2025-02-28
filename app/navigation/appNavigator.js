@@ -10,11 +10,15 @@ export default function AppNavigator(pProps) {
   return (
     <Stack.Navigator initialRouteName="Login">
       <Stack.Screen name="Login" component={Login} />
-      {/* <Stack.Screen name="SignUp" component={SignUp} /> */}
       <Stack.Screen name="HomeScreen" component={HomeScreen} />
       <Stack.Screen
         name="Chat"
-        component={(props) => <ChatScreen db={pProps.db} {...props} />}
+        component={ChatScreen}
+        initialParams={{
+          db: pProps.db,
+          storage: pProps.storage,
+          isConnected: pProps.isConnected,
+        }}
       />
     </Stack.Navigator>
   );
