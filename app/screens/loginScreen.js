@@ -48,9 +48,15 @@ export default function Login({ navigation }) {
   // Google Sign-in
   const handleGoogleLogin = async () => {
     try {
-      await signInWithGoogle();
+      const user = await signInWithGoogle();
       console.log("✅ Google Sign-in Successful");
-      navigation.navigate("HomeScreen");
+
+      navigation.navigate("Chat", {
+        userID: user.uid,
+        name: user.displayName || user.email.split("@")[0],
+        email: user.email,
+        profilePic: user.photoURL,
+      });
     } catch (error) {
       Alert.alert("❌ Google Login Failed", error.message);
     }

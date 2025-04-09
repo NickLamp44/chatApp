@@ -1,77 +1,47 @@
-// ChatScreen
 import React, { useState, useEffect, useCallback } from "react";
-import { GiftedChat } from "react-native-gifted-chat";
-import { SafeAreaView } from "react-native-safe-area-context";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Platform } from "react-native";
-import {
-  collection,
-  addDoc,
-  onSnapshot,
-  query,
-  orderBy,
-  serverTimestamp,
-  doc,
-  updateDoc,
-  arrayUnion,
-  getDoc,
-  setDoc,
-} from "firebase/firestore";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { GiftedChat } from "react-native-gifted-chat";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-// Import components
 import CustomActions from "../components/customAction";
 import MessageBubble from "../components/messageBubble";
+import {
+  sendMessage,
+  listenToMessagesWithExtras,
+} from "../services/messageService";
 
-// Conditionally load MapView for native platforms
 let MapView;
 if (Platform.OS !== "web") {
   try {
     MapView = require("react-native-maps").default;
   } catch (error) {
-    console.error("❌ Error loading react-native-maps:", error);
+    console.error("❌ MapView load error:", error);
   }
 }
 
 const ChatScreen = ({ route }) => {
-  const { userID, name, db, storage, isConnected } = route.params;
+  const { userID, name, email, profilePic, storage, isConnected } =
+    route.params;
+
+  const user = {
+    _id: userID,
+    name,
+    email,
+    avatar: profilePic || undefined,
+  };
+
   const [messages, setMessages] = useState([]);
 
-  console.log("ChatScreen: 🔥 Firestore DB Instance:", db);
-
   useEffect(() => {
-    if (!db) {
-      console.error("❌ Firestore `db` is undefined! Check your imports.");
-      return;
-    }
-
     if (!isConnected) {
-      AsyncStorage.getItem("cachedMessages").then((cachedMessages) => {
-        if (cachedMessages) setMessages(JSON.parse(cachedMessages));
+      AsyncStorage.getItem("cachedMessages").then((cached) => {
+        if (cached) setMessages(JSON.parse(cached));
       });
       return;
     }
 
-    const q = query(collection(db, "Messages"), orderBy("createdAt", "desc"));
-    const unsubscribe = onSnapshot(q, async (snapshot) => {
-      const loadedMessages = snapshot.docs.map((doc) => {
-        const data = doc.data();
-        return {
-          _id: doc.id,
-          text: data.text || "",
-          createdAt: data.createdAt?.toDate() || new Date(),
-          user: data.user || { _id: "unknown", name: "Unknown" },
-          image: data.image || null,
-          location: data.location || null,
-        };
-      });
-
-      setMessages(loadedMessages);
-      await AsyncStorage.setItem(
-        "cachedMessages",
-        JSON.stringify(loadedMessages)
-      );
-    });
-
+    const unsubscribe = listenToMessagesWithExtras(setMessages);
     return () => unsubscribe();
   }, [isConnected]);
 
@@ -83,41 +53,13 @@ const ChatScreen = ({ route }) => {
 
       try {
         await Promise.all(
-          newMessages.map(async (message) => {
-            const formattedUser = message.user || {
-              _id: userID,
-              name: name || "Unknown",
-            };
-
-            const messageRef = await addDoc(collection(db, "Messages"), {
-              _id: message._id,
-              text: message.text || "",
-              image: message.image || null,
-              location: message.location || null,
-              createdAt: serverTimestamp(),
-              user: formattedUser,
-            });
-
-            console.log("✅ Message added to Firestore:", messageRef.id);
-
-            const userRef = doc(db, "Users", userID);
-            const userDoc = await getDoc(userRef);
-            if (!userDoc.exists()) {
-              await setDoc(userRef, { messages: [messageRef.id] });
-            } else {
-              await updateDoc(userRef, {
-                messages: arrayUnion(messageRef.id),
-              });
-            }
-
-            console.log("✅ User document updated with new message ID.");
-          })
+          newMessages.map((message) => sendMessage(message, user))
         );
       } catch (error) {
         console.error("❌ Error sending messages:", error);
       }
     },
-    [userID, name, db]
+    [user]
   );
 
   return (
@@ -125,15 +67,14 @@ const ChatScreen = ({ route }) => {
       <GiftedChat
         messages={messages}
         onSend={onSend}
-        user={{ _id: userID, name }}
-        renderBubble={(props) => <MessageBubble {...props} userID={userID} />}
-        renderAvatar={() => null}
+        user={user}
+        renderBubble={(props) => <MessageBubble {...props} user={user} />}
         renderActions={(props) => (
           <CustomActions
             {...props}
             onSend={onSend}
+            user={user}
             storage={storage}
-            userID={userID}
           />
         )}
       />

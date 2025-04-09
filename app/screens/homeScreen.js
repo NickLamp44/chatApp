@@ -1,4 +1,3 @@
-// HomeScreen
 import React, { useState } from "react";
 import {
   StyleSheet,
@@ -13,6 +12,7 @@ import {
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { getAuth, signInAnonymously } from "firebase/auth";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const HomeScreen = () => {
   const [name, setName] = useState("");
@@ -28,11 +28,20 @@ const HomeScreen = () => {
 
     try {
       const result = await signInAnonymously(auth);
+      const userID = result.user.uid;
+
+      // Save basic session info (optional)
+      await AsyncStorage.setItem(
+        "user",
+        JSON.stringify({ userID, name, backgroundColor })
+      );
+
       navigation.replace("Chat", {
-        userID: result.user.uid,
-        name: name,
-        backgroundColor: backgroundColor,
+        userID,
+        name,
+        backgroundColor,
       });
+
       Alert.alert("✅ Success", "Signed in as a guest!");
     } catch (error) {
       console.error("🔥 Error during anonymous sign-in:", error);
@@ -40,10 +49,8 @@ const HomeScreen = () => {
     }
   };
 
-  // Handle Enter key submission for better UX
   const handleKeyPress = (e) => {
-    if (e.nativeEvent.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
+    if (Platform.OS === "web" && e.nativeEvent.key === "Enter") {
       signInUser();
     }
   };
@@ -55,67 +62,54 @@ const HomeScreen = () => {
       style={styles.container}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
-      <ImageBackground
-        source={require("../../images/Background.png")}
-        style={styles.background}
-        resizeMode="cover"
-      >
-        <View style={styles.contentContainer}>
-          <Text style={styles.title}>Welcome to ChatApp!</Text>
-          <View style={styles.inputContainer}>
-            <TextInput
-              style={styles.textInput}
-              value={name}
-              onChangeText={setName}
-              placeholder="Enter Your Name"
-              placeholderTextColor="#757083"
-              onKeyPress={handleKeyPress}
-              multiline={true}
-              accessibilityLabel="Enter your name"
-            />
-            <Text style={styles.colorText}>Choose Background Color:</Text>
-            <View style={styles.colorContainer}>
-              {colors.map((color) => (
-                <TouchableOpacity
-                  key={color}
-                  style={[
-                    styles.colorOption,
-                    { backgroundColor: color },
-                    backgroundColor === color && styles.selectedColor,
-                  ]}
-                  onPress={() => setBackgroundColor(color)}
-                  accessibilityLabel={`Select background color ${color}`}
-                />
-              ))}
-            </View>
-
-            {/* To Chat Screen */}
-            <TouchableOpacity style={styles.button} onPress={signInUser}>
-              <Text style={styles.buttonText}>Start Chatting</Text>
-            </TouchableOpacity>
-
-            {/* To Login Screen */}
-            <TouchableOpacity
-              style={[styles.button, styles.loginButton]}
-              onPress={() => navigation.navigate("Login")}
-            >
-              <Text style={styles.buttonText}>Login with Account</Text>
-            </TouchableOpacity>
+      <View style={styles.contentContainer}>
+        <Text style={styles.title}>Welcome to ChatApp!</Text>
+        <View style={styles.inputContainer}>
+          <TextInput
+            style={styles.textInput}
+            value={name}
+            onChangeText={setName}
+            placeholder="Enter Your Name"
+            placeholderTextColor="#757083"
+            onKeyPress={handleKeyPress}
+            multiline={true}
+            accessibilityLabel="Enter your name"
+          />
+          <Text style={styles.colorText}>Choose Background Color:</Text>
+          <View style={styles.colorContainer}>
+            {colors.map((color) => (
+              <TouchableOpacity
+                key={color}
+                style={[
+                  styles.colorOption,
+                  { backgroundColor: color },
+                  backgroundColor === color && styles.selectedColor,
+                ]}
+                onPress={() => setBackgroundColor(color)}
+                accessibilityLabel={`Select background color ${color}`}
+              />
+            ))}
           </View>
+
+          <TouchableOpacity style={styles.button} onPress={signInUser}>
+            <Text style={styles.buttonText}>Start Chatting</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.button, styles.loginButton]}
+            onPress={() => navigation.navigate("Login")}
+          >
+            <Text style={styles.buttonText}>Login with Account</Text>
+          </TouchableOpacity>
         </View>
-      </ImageBackground>
+      </View>
     </KeyboardAvoidingView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  background: {
-    flex: 1,
-    justifyContent: "center",
-  },
+  container: { flex: 1 },
+  background: { flex: 1, justifyContent: "center" },
   contentContainer: {
     flex: 1,
     justifyContent: "flex-end",
@@ -125,7 +119,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 45,
     fontWeight: "600",
-    color: "#FFFFFF",
+    color: "#5d0707",
     marginBottom: 40,
   },
   inputContainer: {

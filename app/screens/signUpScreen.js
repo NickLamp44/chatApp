@@ -1,3 +1,5 @@
+// app/screens/signUpScreen.js
+
 import React, { useState } from "react";
 import {
   StyleSheet,
@@ -18,19 +20,17 @@ export default function SignUp({ navigation }) {
   const [userName, setUserName] = useState("");
   const [password, setPassword] = useState("");
 
-  const onHandleSignUp = async () => {
+  const validateInputs = () => {
     if (!email || !password || !userName) {
       Alert.alert("⚠️ Error", "Please fill in all fields.");
-      return;
+      return false;
     }
 
-    // Validate email input
     if (!/\S+@\S+\.\S+/.test(email)) {
       Alert.alert("⚠️ Error", "Please enter a valid email address.");
-      return;
+      return false;
     }
 
-    // Enforce a strong password (at least 6 chars, 1 number, 1 special char)
     if (
       password.length < 6 ||
       !/\d/.test(password) ||
@@ -38,38 +38,52 @@ export default function SignUp({ navigation }) {
     ) {
       Alert.alert(
         "⚠️ Weak Password",
-        "Password must be at least 6 characters long & include a number & special character."
+        "Password must be at least 6 characters long, include a number, and a special character."
       );
-      return;
+      return false;
     }
 
+    return true;
+  };
+
+  const onHandleSignUp = async () => {
+    if (!validateInputs()) return;
+
     try {
-      await registerUser(userName, email, password);
+      const newUser = await registerUser(
+        userName.trim(),
+        email.trim(),
+        password
+      );
+      console.log("✅ User registered:", newUser.uid);
       Alert.alert("✅ Success!", "Account created!");
       navigation.replace("Login");
     } catch (error) {
+      console.error("❌ Signup error:", error.message);
       Alert.alert("❌ Signup Failed", error.message);
     }
   };
 
-  // Google Sign-in
   const handleGoogleSignIn = async () => {
     try {
-      await signInWithGoogle();
+      const user = await signInWithGoogle();
+      console.log("✅ Google Sign-in:", user.uid);
       Alert.alert("✅ Success!", "Signed in with Google.");
       navigation.replace("Main");
     } catch (error) {
+      console.error("❌ Google Sign-in error:", error.message);
       Alert.alert("❌ Google Sign-in Failed", error.message);
     }
   };
 
-  // Facebook Sign-in
   const handleFacebookSignIn = async () => {
     try {
-      await signInWithFacebook();
-      Alert.alert("Success!", "Signed in with Facebook.");
+      const user = await signInWithFacebook();
+      console.log("✅ Facebook Sign-in:", user.uid);
+      Alert.alert("✅ Success!", "Signed in with Facebook.");
       navigation.replace("Main");
     } catch (error) {
+      console.error("❌ Facebook Sign-in error:", error.message);
       Alert.alert("❌ Facebook Sign-in Failed", error.message);
     }
   };
@@ -78,44 +92,36 @@ export default function SignUp({ navigation }) {
     <View style={styles.container}>
       <Text style={styles.title}>Create New Account</Text>
 
-      {/* Email Input */}
       <TextInput
         style={styles.input}
         placeholder="Enter email"
         autoCapitalize="none"
         keyboardType="email-address"
-        textContentType="emailAddress"
         value={email}
         onChangeText={setEmail}
       />
 
-      {/* Username Input */}
       <TextInput
         style={styles.input}
-        placeholder="Enter Username"
+        placeholder="Enter username"
         autoCapitalize="none"
-        textContentType="username"
         value={userName}
         onChangeText={setUserName}
       />
 
-      {/* Password Input */}
       <TextInput
         style={styles.input}
         placeholder="Enter password"
         autoCapitalize="none"
-        secureTextEntry={true}
-        textContentType="password"
+        secureTextEntry
         value={password}
         onChangeText={setPassword}
       />
 
-      {/* Sign-Up Button */}
       <TouchableOpacity style={styles.button} onPress={onHandleSignUp}>
         <Text style={styles.buttonText}>Sign Up</Text>
       </TouchableOpacity>
 
-      {/* Google Sign-In Button */}
       <TouchableOpacity
         style={[styles.button, styles.googleButton]}
         onPress={handleGoogleSignIn}
@@ -123,7 +129,6 @@ export default function SignUp({ navigation }) {
         <Text style={styles.buttonText}>Sign Up with Google</Text>
       </TouchableOpacity>
 
-      {/* Facebook Sign-In Button */}
       <TouchableOpacity
         style={[styles.button, styles.facebookButton]}
         onPress={handleFacebookSignIn}
@@ -131,7 +136,6 @@ export default function SignUp({ navigation }) {
         <Text style={styles.buttonText}>Sign Up with Facebook</Text>
       </TouchableOpacity>
 
-      {/*  Navigate to Login Screen */}
       <TouchableOpacity onPress={() => navigation.navigate("Login")}>
         <Text style={styles.loginText}>Already have an account? Log in</Text>
       </TouchableOpacity>
@@ -139,7 +143,6 @@ export default function SignUp({ navigation }) {
   );
 }
 
-// Styles for Sign-Up Screen
 const styles = StyleSheet.create({
   container: {
     flex: 1,
