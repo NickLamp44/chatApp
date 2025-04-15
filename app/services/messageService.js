@@ -5,7 +5,9 @@ import {
   doc,
   updateDoc,
   arrayUnion,
+  arrayRemove,
   getDoc,
+  getDocs,
   setDoc,
   query,
   orderBy,
@@ -17,16 +19,13 @@ import { db } from "./firebase";
 const MESSAGES_COLLECTION = "Messages";
 const USERS_COLLECTION = "Users";
 
-// Save a new message to Firestore and associate it with a user.
-
+// Send a new message
 export const sendMessage = async (message, user) => {
-  const { _id: userID, name, email, avatar } = user;
-
-  const enrichedUser = {
-    _id: userID,
-    name,
-    email: email || null,
-    avatar: avatar || null,
+  const userData = {
+    _id: user._id,
+    name: user.name,
+    email: user.email || null,
+    avatar: user.avatar || null,
   };
 
   const messageRef = await addDoc(collection(db, MESSAGES_COLLECTION), {
@@ -35,19 +34,17 @@ export const sendMessage = async (message, user) => {
     image: message.image || null,
     location: message.location || null,
     createdAt: serverTimestamp(),
-    user: enrichedUser,
+    user: userData,
+    likedBy: [],
   });
 
-  const userRef = doc(db, USERS_COLLECTION, userID);
+  const userRef = doc(db, USERS_COLLECTION, user._id);
   const userSnap = await getDoc(userRef);
 
   if (!userSnap.exists()) {
     await setDoc(userRef, {
       messages: [messageRef.id],
-      userID,
-      name,
-      email,
-      profilePic: avatar || null,
+      ...userData,
       createdAt: serverTimestamp(),
     });
   } else {
@@ -59,18 +56,12 @@ export const sendMessage = async (message, user) => {
   return messageRef.id;
 };
 
-// Save a reply under a message's Replies subcollection.
-
+// Reply to a message
 export const replyToMessage = async (messageID, replyText, user) => {
   const reply = {
     text: replyText,
     createdAt: serverTimestamp(),
-    user: {
-      _id: user._id,
-      name: user.name,
-      email: user.email || null,
-      avatar: user.avatar || null,
-    },
+    user,
   };
 
   const repliesRef = collection(
@@ -82,26 +73,23 @@ export const replyToMessage = async (messageID, replyText, user) => {
   return replyDoc.id;
 };
 
-// Add a reaction to a message (using subcollection `Reactions`)
+// Toggle Reaction on a message (like/unlike)
+export const toggleReaction = async (messageID, userID, emoji) => {
+  const msgRef = doc(db, MESSAGES_COLLECTION, messageID);
+  const msgSnap = await getDoc(msgRef);
 
-export const reactToMessage = async (messageID, userID, reaction) => {
-  const reactionData = {
-    userID,
-    type: reaction,
-    reactedAt: serverTimestamp(),
-  };
+  if (!msgSnap.exists()) return;
 
-  const reactionsRef = collection(
-    db,
-    `${MESSAGES_COLLECTION}/${messageID}/Reactions`
-  );
+  const likedBy = msgSnap.data().likedBy || [];
 
-  const reactionDoc = await addDoc(reactionsRef, reactionData);
-  return reactionDoc.id;
+  const updateData = likedBy.includes(emoji)
+    ? { likedBy: arrayRemove(emoji) }
+    : { likedBy: arrayUnion(emoji) };
+
+  await updateDoc(msgRef, updateData);
 };
 
-// Subscribe to Firestore messages and update UI.
-
+// Real-time listener with replies and reactions
 export const listenToMessages = (onMessagesUpdate) => {
   const q = query(
     collection(db, MESSAGES_COLLECTION),
@@ -109,35 +97,12 @@ export const listenToMessages = (onMessagesUpdate) => {
   );
 
   return onSnapshot(q, async (snapshot) => {
-    const messages = snapshot.docs.map((doc) => {
-      const data = doc.data();
-      return {
-        _id: doc.id,
-        text: data.text || "",
-        createdAt: data.createdAt?.toDate() || new Date(),
-        user: data.user || { _id: "unknown", name: "Unknown" },
-        image: data.image || null,
-        location: data.location || null,
-      };
-    });
-
-    await AsyncStorage.setItem("cachedMessages", JSON.stringify(messages));
-    onMessagesUpdate(messages);
-  });
-};
-
-export const listenToMessagesWithExtras = async (setMessages) => {
-  const q = query(collection(db, "Messages"), orderBy("createdAt", "desc"));
-
-  return onSnapshot(q, async (snapshot) => {
-    const enriched = await Promise.all(
+    const messages = await Promise.all(
       snapshot.docs.map(async (docSnap) => {
         const data = docSnap.data();
+
         const repliesSnap = await getDocs(
-          collection(db, `Messages/${docSnap.id}/Replies`)
-        );
-        const reactionsSnap = await getDocs(
-          collection(db, `Messages/${docSnap.id}/Reactions`)
+          collection(db, `${MESSAGES_COLLECTION}/${docSnap.id}/Replies`)
         );
 
         return {
@@ -147,16 +112,13 @@ export const listenToMessagesWithExtras = async (setMessages) => {
           user: data.user,
           image: data.image || null,
           location: data.location || null,
-          replies: repliesSnap.docs.map((d) => ({ _id: d.id, ...d.data() })),
-          reactions: reactionsSnap.docs.map((d) => ({
-            _id: d.id,
-            ...d.data(),
-          })),
+          likedBy: data.likedBy || [],
+          replies: repliesSnap.docs.map((r) => ({ _id: r.id, ...r.data() })),
         };
       })
     );
 
-    await AsyncStorage.setItem("cachedMessages", JSON.stringify(enriched));
-    setMessages(enriched);
+    await AsyncStorage.setItem("cachedMessages", JSON.stringify(messages));
+    onMessagesUpdate(messages);
   });
 };

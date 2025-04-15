@@ -44,6 +44,7 @@
     "resolve-url-loader": "^5.0.0",
     "serialize-javascript": "^6.0.2",
     "svgo": "^2.8.0",
+    "uuid": "^11.1.0",
     "workbox-webpack-plugin": "^7.3.0"
   },
   "devDependencies": {

@@ -1,82 +1,98 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { Platform } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import React, { useEffect, useState, useCallback } from "react";
+import { SafeAreaView, TouchableOpacity, Platform } from "react-native";
 import { GiftedChat } from "react-native-gifted-chat";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-import CustomActions from "../components/customAction";
-import MessageBubble from "../components/messageBubble";
 import {
+  listenToMessages,
   sendMessage,
-  listenToMessagesWithExtras,
+  joinChatRoom,
+  toggleReaction,
 } from "../services/messageService";
 
-let MapView;
-if (Platform.OS !== "web") {
-  try {
-    MapView = require("react-native-maps").default;
-  } catch (error) {
-    console.error("❌ MapView load error:", error);
-  }
-}
+import MessageBubble from "../components/messageBubble";
+import CustomActions from "../components/customAction";
+import ReactBubble from "../components/reactBubble";
 
 const ChatScreen = ({ route }) => {
-  const { userID, name, email, profilePic, storage, isConnected } =
-    route.params;
+  const {
+    chatRoom_ID,
+    userID,
+    name,
+    email,
+    profilePic,
+    storage,
+    isGuest,
+    backgroundColor,
+  } = route.params;
 
   const user = {
     _id: userID,
-    name,
-    email,
-    avatar: profilePic || undefined,
+    name: name || "Guest",
+    email: email || "guest@circleup.app",
+    avatar: profilePic || null,
   };
 
   const [messages, setMessages] = useState([]);
+  const [selectedMessage, setSelectedMessage] = useState(null);
+  const [showPicker, setShowPicker] = useState(false);
 
   useEffect(() => {
-    if (!isConnected) {
-      AsyncStorage.getItem("cachedMessages").then((cached) => {
-        if (cached) setMessages(JSON.parse(cached));
-      });
-      return;
-    }
+    if (!chatRoom_ID) return;
 
-    const unsubscribe = listenToMessagesWithExtras(setMessages);
-    return () => unsubscribe();
-  }, [isConnected]);
+    const unsubscribe = listenToMessages(setMessages);
+
+    if (!isGuest) joinChatRoom(userID, chatRoom_ID);
+
+    return unsubscribe;
+  }, [chatRoom_ID]);
 
   const onSend = useCallback(
     async (newMessages = []) => {
-      setMessages((prevMessages) =>
-        GiftedChat.append(prevMessages, newMessages)
-      );
-
-      try {
-        await Promise.all(
-          newMessages.map((message) => sendMessage(message, user))
-        );
-      } catch (error) {
-        console.error("❌ Error sending messages:", error);
-      }
+      setMessages((prev) => GiftedChat.append(prev, newMessages));
+      await Promise.all(newMessages.map((msg) => sendMessage(msg, user)));
     },
-    [user]
+    [chatRoom_ID, user]
   );
 
+  const handleAddReaction = async (emoji) => {
+    if (!selectedMessage) return;
+
+    await toggleReaction(selectedMessage._id, user._id, emoji);
+    setShowPicker(false);
+    setSelectedMessage(null);
+  };
+
   return (
-    <SafeAreaView style={{ flex: 1 }}>
+    <SafeAreaView
+      style={{ flex: 1, backgroundColor: backgroundColor || "#fff" }}
+    >
       <GiftedChat
         messages={messages}
         onSend={onSend}
         user={user}
         renderBubble={(props) => <MessageBubble {...props} user={user} />}
+        renderAvatar={null}
         renderActions={(props) => (
-          <CustomActions
-            {...props}
-            onSend={onSend}
-            user={user}
-            storage={storage}
-          />
+          <CustomActions {...props} user={user} storage={storage} />
         )}
+        renderMessage={(props) => (
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onLongPress={() => {
+              setSelectedMessage(props.currentMessage);
+              setShowPicker(true);
+            }}
+          >
+            <MessageBubble {...props} user={user} />
+          </TouchableOpacity>
+        )}
+      />
+
+      <ReactBubble
+        visible={showPicker}
+        onSelect={handleAddReaction}
+        onClose={() => setShowPicker(false)}
       />
     </SafeAreaView>
   );

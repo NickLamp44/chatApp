@@ -14,20 +14,15 @@ import {
   signInWithGoogle,
   signInWithFacebook,
 } from "../services/firebaseAuth";
-import { getAuth, signInAnonymously } from "firebase/auth";
 import { AntDesign, FontAwesome } from "@expo/vector-icons";
 
 export default function Login({ navigation }) {
   const [input, setInput] = useState("");
   const [password, setPassword] = useState("");
 
-  //  Email/Username Login
-  const onHandleLogin = async () => {
+  const handleStandardLogin = async () => {
     if (!input || !password) {
-      Alert.alert(
-        "❌ Error",
-        "Please enter your Username or Email and Password."
-      );
+      Alert.alert("❌ Error", "Please enter Username/Email & Password.");
       return;
     }
 
@@ -38,6 +33,7 @@ export default function Login({ navigation }) {
       } else {
         await loginUserWithUsername(input, password);
       }
+
       console.log("✅ Login Successful");
       navigation.navigate("HomeScreen");
     } catch (error) {
@@ -45,51 +41,41 @@ export default function Login({ navigation }) {
     }
   };
 
-  // Google Sign-in
   const handleGoogleLogin = async () => {
     try {
       const user = await signInWithGoogle();
-      console.log("✅ Google Sign-in Successful");
+      console.log("✅ Google Login Successful");
 
-      navigation.navigate("Chat", {
+      navigation.navigate("HomeScreen", {
         userID: user.uid,
         name: user.displayName || user.email.split("@")[0],
         email: user.email,
         profilePic: user.photoURL,
+        isGuest: false,
       });
     } catch (error) {
       Alert.alert("❌ Google Login Failed", error.message);
     }
   };
 
-  // Facebook Sign-in
   const handleFacebookLogin = async () => {
     try {
       await signInWithFacebook();
-      console.log("✅ Facebook Sign-in Successful");
+      console.log("✅ Facebook Login Successful");
       navigation.navigate("HomeScreen");
     } catch (error) {
       Alert.alert("❌ Facebook Login Failed", error.message);
     }
   };
 
-  // Anonymous Login
-  const handleAnonymousLogin = async () => {
-    try {
-      const auth = getAuth();
-      const result = await signInAnonymously(auth);
-      console.log("✅ Signed in anonymously");
-      navigation.navigate("HomeScreen", { userID: result.user.uid });
-    } catch (error) {
-      Alert.alert("❌ Anonymous Login Failed", error.message);
-    }
+  const handleGuestLogin = () => {
+    navigation.navigate("HomeScreen", { isGuest: true });
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Welcome Back!</Text>
+      <Text style={styles.title}>Welcome to Circle Up!</Text>
 
-      {/* Email/Username Input */}
       <TextInput
         style={styles.input}
         placeholder="Enter Email or Username"
@@ -98,27 +84,23 @@ export default function Login({ navigation }) {
         onChangeText={setInput}
       />
 
-      {/* Password Input */}
       <TextInput
         style={styles.input}
         placeholder="Enter Password"
-        secureTextEntry={true}
+        secureTextEntry
         value={password}
         onChangeText={setPassword}
       />
 
-      {/* Login Button */}
-      <Button onPress={onHandleLogin} color="#444daf" title="Login" />
+      <Button onPress={handleStandardLogin} color="#444daf" title="Login" />
 
       <Text style={styles.orText}>OR</Text>
 
-      {/* Google Sign-in Button */}
       <TouchableOpacity style={styles.googleButton} onPress={handleGoogleLogin}>
         <AntDesign name="google" size={24} color="white" />
         <Text style={styles.buttonText}>Sign in with Google</Text>
       </TouchableOpacity>
 
-      {/* Facebook Sign-in Button */}
       <TouchableOpacity
         style={styles.facebookButton}
         onPress={handleFacebookLogin}
@@ -127,12 +109,10 @@ export default function Login({ navigation }) {
         <Text style={styles.buttonText}>Sign in with Facebook</Text>
       </TouchableOpacity>
 
-      {/* Anonymous Login */}
-      <TouchableOpacity style={styles.button} onPress={handleAnonymousLogin}>
+      <TouchableOpacity style={styles.button} onPress={handleGuestLogin}>
         <Text style={styles.buttonText}>Continue as Guest</Text>
       </TouchableOpacity>
 
-      {/* Sign Up Navigation */}
       <TouchableOpacity onPress={() => navigation.navigate("SignUp")}>
         <Text style={styles.signupText}>Don't have an account? Sign up</Text>
       </TouchableOpacity>
@@ -141,6 +121,7 @@ export default function Login({ navigation }) {
 }
 
 const styles = StyleSheet.create({
+  // unchanged styles...
   container: {
     flex: 1,
     backgroundColor: "#fff",
