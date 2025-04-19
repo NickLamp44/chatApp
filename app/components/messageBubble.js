@@ -1,8 +1,11 @@
+// components/MessageBubble.js
+
 import React from "react";
 import { View, Text, Image, StyleSheet } from "react-native";
 
 const MessageBubble = ({ currentMessage, user }) => {
-  const isUser = currentMessage.user._id === user._id;
+  const messageUser = currentMessage.user;
+  const isUser = messageUser?._id === user._id;
 
   return (
     <View
@@ -11,41 +14,39 @@ const MessageBubble = ({ currentMessage, user }) => {
         isUser ? styles.rightContainer : styles.leftContainer,
       ]}
     >
-      {!isUser && currentMessage.user.avatar && (
-        <Image
-          source={{ uri: currentMessage.user.avatar }}
-          style={styles.avatar}
-        />
+      {!isUser && messageUser?.avatar && (
+        <Image source={{ uri: messageUser.avatar }} style={styles.avatar} />
       )}
 
       <View
         style={[styles.bubble, isUser ? styles.rightBubble : styles.leftBubble]}
       >
-        {!isUser && (
-          <Text style={styles.username}>{currentMessage.user.name}</Text>
+        {!isUser && messageUser?.name && (
+          <Text style={styles.username}>{messageUser.name}</Text>
         )}
 
         {currentMessage.replyTo && (
           <Text style={styles.replyText}>↪️ Replying to message...</Text>
         )}
 
-        {currentMessage.text && (
+        {!!currentMessage.text && (
           <Text style={styles.text}>{currentMessage.text}</Text>
         )}
 
-        {currentMessage.image && (
+        {!!currentMessage.image && (
           <Image source={{ uri: currentMessage.image }} style={styles.image} />
         )}
 
-        {currentMessage.likedBy?.length > 0 && (
-          <View style={styles.reactionsContainer}>
-            {currentMessage.likedBy.map((reaction, idx) => (
-              <Text key={idx} style={styles.reaction}>
-                {reaction}
-              </Text>
-            ))}
-          </View>
-        )}
+        {Array.isArray(currentMessage.likedBy) &&
+          currentMessage.likedBy.length > 0 && (
+            <View style={styles.reactionsContainer}>
+              {currentMessage.likedBy.map((reaction, idx) => (
+                <Text key={idx} style={styles.reaction}>
+                  {reaction}
+                </Text>
+              ))}
+            </View>
+          )}
       </View>
     </View>
   );

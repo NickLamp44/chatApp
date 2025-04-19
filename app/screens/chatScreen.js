@@ -1,20 +1,26 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { SafeAreaView, TouchableOpacity, Platform } from "react-native";
+import {
+  SafeAreaView,
+  TouchableOpacity,
+  Platform,
+  Text,
+  View,
+} from "react-native";
 import { GiftedChat } from "react-native-gifted-chat";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import {
   listenToMessages,
   sendMessage,
-  joinChatRoom,
   toggleReaction,
 } from "../services/messageService";
+import { joinChatRoom } from "../services/chatRoomService";
 
 import MessageBubble from "../components/messageBubble";
 import CustomActions from "../components/customAction";
 import ReactBubble from "../components/reactBubble";
 
-const ChatScreen = ({ route }) => {
+const ChatScreen = ({ route, navigation }) => {
   const {
     chatRoom_ID,
     userID,
@@ -67,6 +73,21 @@ const ChatScreen = ({ route }) => {
     <SafeAreaView
       style={{ flex: 1, backgroundColor: backgroundColor || "#fff" }}
     >
+      {/* Back Button */}
+      <View
+        style={{
+          paddingTop: Platform.OS === "android" ? 40 : 10,
+          paddingHorizontal: 16,
+          paddingBottom: 10,
+          backgroundColor: backgroundColor || "#fff",
+        }}
+      >
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <Text style={{ fontSize: 16, color: "#007AFF" }}>← Back</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Chat */}
       <GiftedChat
         messages={messages}
         onSend={onSend}
@@ -89,6 +110,7 @@ const ChatScreen = ({ route }) => {
         )}
       />
 
+      {/* Emoji Picker */}
       <ReactBubble
         visible={showPicker}
         onSelect={handleAddReaction}

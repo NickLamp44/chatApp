@@ -13,7 +13,7 @@ import {
 
 import { getAllChatRooms, joinChatRoom } from "../services/chatRoomService";
 
-export default function RoomSelection({ navigation, user }) {
+export default function RoomSelection({ navigation, user, onRoomSelect }) {
   const [rooms, setRooms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
@@ -47,10 +47,7 @@ export default function RoomSelection({ navigation, user }) {
   const joinRoom = async (room, password = null) => {
     try {
       await joinChatRoom(user.userID, room.chatRoom_ID, password);
-      navigation.navigate("Chat", {
-        chatRoom_ID: room.chatRoom_ID,
-        user,
-      });
+      onRoomSelect?.(room.chatRoom_ID);
     } catch (error) {
       Alert.alert("Access Denied", error.message);
     }

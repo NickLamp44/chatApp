@@ -12,19 +12,32 @@ import {
 import { useNavigation, useRoute } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import RoomSelection from "../components/roomSelector";
+import { seedInitialRooms } from "../utils/seedInitalRooms";
 
 const HomeScreen = () => {
-  const route = useRoute();
   const navigation = useNavigation();
+  const route = useRoute();
 
-  const { userID, isGuest, name: initialName } = route.params || {};
+  const {
+    userID,
+    isGuest,
+    name: initialName,
+    email,
+    profilePic,
+  } = route.params || {};
 
   const [name, setName] = useState(initialName || "");
   const [backgroundColor, setBackgroundColor] = useState("#090C08");
+  const [selectedRoomID, setSelectedRoomID] = useState(null);
 
   const colors = ["#090C08", "#474056", "#8A95A5", "#B9C6AE"];
 
   const proceedToChat = async () => {
+    if (!selectedRoomID) {
+      Alert.alert("⚠️ Select a Room", "Please select a chat room first.");
+      return;
+    }
+
     if (isGuest && !name.trim()) {
       Alert.alert("⚠️ Name required", "Please enter a display name.");
       return;
@@ -40,6 +53,7 @@ const HomeScreen = () => {
       name,
       backgroundColor,
       isGuest: !!isGuest,
+      chatRoom_ID: selectedRoomID,
     });
   };
 
@@ -56,23 +70,24 @@ const HomeScreen = () => {
     >
       <View style={styles.contentContainer}>
         <Text style={styles.title}>Welcome to Circle Up!</Text>
+
         <RoomSelection
           navigation={navigation}
           user={{ userID, name, email, profilePic }}
+          onRoomSelect={setSelectedRoomID}
         />
+
         <View style={styles.inputContainer}>
           {isGuest && (
-            <>
-              <TextInput
-                style={styles.textInput}
-                value={name}
-                onChangeText={setName}
-                placeholder="Enter Your Name"
-                placeholderTextColor="#757083"
-                onKeyPress={handleKeyPress}
-                multiline={true}
-              />
-            </>
+            <TextInput
+              style={styles.textInput}
+              value={name}
+              onChangeText={setName}
+              placeholder="Enter Your Name"
+              placeholderTextColor="#757083"
+              onKeyPress={handleKeyPress}
+              multiline={true}
+            />
           )}
 
           <Text style={styles.colorText}>Choose Background Color:</Text>
@@ -95,7 +110,6 @@ const HomeScreen = () => {
             <Text style={styles.buttonText}>Start Chatting</Text>
           </TouchableOpacity>
 
-          {/* DEV ROOM */}
           <TouchableOpacity
             style={[styles.button, { backgroundColor: "#FF6347" }]}
             onPress={seedInitialRooms}
@@ -109,9 +123,7 @@ const HomeScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  // unchanged styles...
   container: { flex: 1 },
-  background: { flex: 1, justifyContent: "center" },
   contentContainer: {
     flex: 1,
     justifyContent: "flex-end",
@@ -170,9 +182,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     width: "100%",
     marginVertical: 5,
-  },
-  loginButton: {
-    backgroundColor: "#4CAF50",
   },
   buttonText: {
     color: "#FFFFFF",
