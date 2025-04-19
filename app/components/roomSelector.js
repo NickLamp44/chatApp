@@ -10,15 +10,15 @@ import {
   Alert,
   StyleSheet,
 } from "react-native";
-
 import { getAllChatRooms, joinChatRoom } from "../services/chatRoomService";
 
 export default function RoomSelection({ navigation, user, onRoomSelect }) {
   const [rooms, setRooms] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState(null);
+  const [selectedRoomID, setSelectedRoomID] = useState(null);
   const [passwordInput, setPasswordInput] = useState("");
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
 
   useEffect(() => {
     const fetchRooms = async () => {
@@ -35,6 +35,22 @@ export default function RoomSelection({ navigation, user, onRoomSelect }) {
     fetchRooms();
   }, []);
 
+  const joinRoom = async (room, password = null) => {
+    try {
+      await joinChatRoom(user.userID, room.chatRoom_ID, password);
+      setSelectedRoomID(room.chatRoom_ID);
+
+      console.log("✅ Joined Room:", room.chatRoom_ID);
+      onRoomSelect?.(room.chatRoom_ID);
+
+      return true;
+    } catch (error) {
+      console.error("❌ Failed to join room:", error.message);
+      Alert.alert("Access Denied", error.message);
+      return false;
+    }
+  };
+
   const handleRoomPress = (room) => {
     if (room.isPrivate) {
       setSelectedRoom(room);
@@ -44,24 +60,17 @@ export default function RoomSelection({ navigation, user, onRoomSelect }) {
     }
   };
 
-  const joinRoom = async (room, password = null) => {
-    try {
-      await joinChatRoom(user.userID, room.chatRoom_ID, password);
-      onRoomSelect?.(room.chatRoom_ID);
-    } catch (error) {
-      Alert.alert("Access Denied", error.message);
-    }
-  };
-
-  const handlePasswordSubmit = () => {
+  const handlePasswordSubmit = async () => {
     if (!passwordInput.trim()) {
-      Alert.alert("Please enter the room password.");
+      Alert.alert("⚠️ Required", "Please enter the room password.");
       return;
     }
 
-    joinRoom(selectedRoom, passwordInput);
-    setPasswordInput("");
-    setShowPasswordModal(false);
+    const success = await joinRoom(selectedRoom, passwordInput);
+    if (success) {
+      setPasswordInput("");
+      setShowPasswordModal(false);
+    }
   };
 
   if (loading) {
@@ -85,7 +94,13 @@ export default function RoomSelection({ navigation, user, onRoomSelect }) {
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <TouchableOpacity
-            style={styles.roomCard}
+            style={[
+              styles.roomCard,
+              selectedRoomID === item.chatRoom_ID && {
+                borderColor: "#444daf",
+                borderWidth: 2,
+              },
+            ]}
             onPress={() => handleRoomPress(item)}
           >
             <Text style={styles.roomName}>{item.chatRoomName}</Text>
@@ -160,7 +175,6 @@ const styles = StyleSheet.create({
   buttonText: { color: "#fff", fontWeight: "600" },
   emptyContainer: { padding: 20, alignItems: "center" },
   emptyText: { fontSize: 16, color: "#666" },
-
   modalContainer: {
     flex: 1,
     justifyContent: "center",

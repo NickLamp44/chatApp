@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   StyleSheet,
   View,
@@ -18,17 +18,42 @@ const HomeScreen = () => {
   const navigation = useNavigation();
   const route = useRoute();
 
-  const {
-    userID,
-    isGuest,
-    name: initialName,
-    email,
-    profilePic,
-  } = route.params || {};
-
-  const [name, setName] = useState(initialName || "");
+  const [userID, setUserID] = useState(null);
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [profilePic, setProfilePic] = useState("");
+  const [isGuest, setIsGuest] = useState(false);
   const [backgroundColor, setBackgroundColor] = useState("#090C08");
   const [selectedRoomID, setSelectedRoomID] = useState(null);
+
+  useEffect(() => {
+    const loadUser = async () => {
+      if (route.params) {
+        const { userID, name, email, profilePic, isGuest } = route.params;
+        setUserID(userID);
+        setName(name);
+        setEmail(email);
+        setProfilePic(profilePic);
+        setIsGuest(!!isGuest);
+      } else {
+        const user = await AsyncStorage.getItem("user");
+        if (user) {
+          const parsed = JSON.parse(user);
+          setUserID(parsed.userID);
+          setName(parsed.name);
+          setBackgroundColor(parsed.backgroundColor || "#090C08");
+          setIsGuest(false);
+        }
+      }
+    };
+
+    loadUser();
+  }, [route.params]);
+
+  const handleRoomSelect = (roomID) => {
+    console.log("🟡 onRoomSelect triggered with:", roomID);
+    setSelectedRoomID(roomID);
+  };
 
   const colors = ["#090C08", "#474056", "#8A95A5", "#B9C6AE"];
 
@@ -52,8 +77,16 @@ const HomeScreen = () => {
       userID,
       name,
       backgroundColor,
-      isGuest: !!isGuest,
+      isGuest,
       chatRoom_ID: selectedRoomID,
+      email,
+      profilePic,
+    });
+
+    console.log("➡️ Proceeding to Chat with:", {
+      selectedRoomID,
+      userID,
+      name,
     });
   };
 
@@ -74,7 +107,7 @@ const HomeScreen = () => {
         <RoomSelection
           navigation={navigation}
           user={{ userID, name, email, profilePic }}
-          onRoomSelect={setSelectedRoomID}
+          onRoomSelect={handleRoomSelect}
         />
 
         <View style={styles.inputContainer}>
@@ -108,13 +141,6 @@ const HomeScreen = () => {
 
           <TouchableOpacity style={styles.button} onPress={proceedToChat}>
             <Text style={styles.buttonText}>Start Chatting</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.button, { backgroundColor: "#FF6347" }]}
-            onPress={seedInitialRooms}
-          >
-            <Text style={styles.buttonText}>Seed Initial Rooms</Text>
           </TouchableOpacity>
         </View>
       </View>

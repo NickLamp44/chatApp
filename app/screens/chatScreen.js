@@ -5,6 +5,7 @@ import {
   Platform,
   Text,
   View,
+  Alert,
 } from "react-native";
 import { GiftedChat } from "react-native-gifted-chat";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -30,7 +31,11 @@ const ChatScreen = ({ route, navigation }) => {
     storage,
     isGuest,
     backgroundColor,
-  } = route.params;
+  } = route.params || {};
+
+  const [messages, setMessages] = useState([]);
+  const [selectedMessage, setSelectedMessage] = useState(null);
+  const [showPicker, setShowPicker] = useState(false);
 
   const user = {
     _id: userID,
@@ -39,24 +44,26 @@ const ChatScreen = ({ route, navigation }) => {
     avatar: profilePic || null,
   };
 
-  const [messages, setMessages] = useState([]);
-  const [selectedMessage, setSelectedMessage] = useState(null);
-  const [showPicker, setShowPicker] = useState(false);
-
   useEffect(() => {
-    if (!chatRoom_ID) return;
+    if (!chatRoom_ID) {
+      Alert.alert("Error", "No chat room selected.");
+      navigation.goBack();
+      return;
+    }
 
-    const unsubscribe = listenToMessages(setMessages);
-
+    const unsubscribe = listenToMessages(chatRoom_ID, setMessages);
     if (!isGuest) joinChatRoom(userID, chatRoom_ID);
 
     return unsubscribe;
-  }, [chatRoom_ID]);
+  }, [chatRoom_ID, userID, isGuest]);
 
   const onSend = useCallback(
     async (newMessages = []) => {
       setMessages((prev) => GiftedChat.append(prev, newMessages));
-      await Promise.all(newMessages.map((msg) => sendMessage(msg, user)));
+
+      await Promise.all(
+        newMessages.map((msg) => sendMessage(msg, user, chatRoom_ID))
+      );
     },
     [chatRoom_ID, user]
   );
@@ -65,15 +72,15 @@ const ChatScreen = ({ route, navigation }) => {
     if (!selectedMessage) return;
 
     await toggleReaction(selectedMessage._id, user._id, emoji);
-    setShowPicker(false);
     setSelectedMessage(null);
+    setShowPicker(false);
   };
 
   return (
     <SafeAreaView
       style={{ flex: 1, backgroundColor: backgroundColor || "#fff" }}
     >
-      {/* Back Button */}
+      {/* Header */}
       <View
         style={{
           paddingTop: Platform.OS === "android" ? 40 : 10,
@@ -82,12 +89,22 @@ const ChatScreen = ({ route, navigation }) => {
           backgroundColor: backgroundColor || "#fff",
         }}
       >
-        <TouchableOpacity onPress={() => navigation.goBack()}>
+        <TouchableOpacity
+          onPress={() =>
+            navigation.replace("HomeScreen", {
+              userID,
+              name,
+              email,
+              profilePic,
+              isGuest,
+            })
+          }
+        >
           <Text style={{ fontSize: 16, color: "#007AFF" }}>← Back</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Chat */}
+      {/* Chat UI */}
       <GiftedChat
         messages={messages}
         onSend={onSend}
@@ -108,9 +125,10 @@ const ChatScreen = ({ route, navigation }) => {
             <MessageBubble {...props} user={user} />
           </TouchableOpacity>
         )}
+        keyboardShouldPersistTaps="handled"
       />
 
-      {/* Emoji Picker */}
+      {/* Reactions */}
       <ReactBubble
         visible={showPicker}
         onSelect={handleAddReaction}

@@ -20,7 +20,9 @@ const MESSAGES_COLLECTION = "Messages";
 const USERS_COLLECTION = "Users";
 
 // Send a new message
-export const sendMessage = async (message, user) => {
+export const sendMessage = async (message, user, chatRoom_ID) => {
+  if (!chatRoom_ID) throw new Error("Missing chatRoom_ID");
+
   const userData = {
     _id: user._id,
     name: user.name,
@@ -28,7 +30,7 @@ export const sendMessage = async (message, user) => {
     avatar: user.avatar || null,
   };
 
-  const messageRef = await addDoc(collection(db, MESSAGES_COLLECTION), {
+  const messageData = {
     _id: message._id,
     text: message.text || "",
     image: message.image || null,
@@ -36,15 +38,20 @@ export const sendMessage = async (message, user) => {
     createdAt: serverTimestamp(),
     user: userData,
     likedBy: [],
-  });
+  };
 
-  const userRef = doc(db, USERS_COLLECTION, user._id);
+  const messageRef = await addDoc(
+    collection(db, `ChatRooms/${chatRoom_ID}/Messages`),
+    messageData
+  );
+
+  const userRef = doc(db, "Users", user._id);
   const userSnap = await getDoc(userRef);
 
   if (!userSnap.exists()) {
     await setDoc(userRef, {
-      messages: [messageRef.id],
       ...userData,
+      messages: [messageRef.id],
       createdAt: serverTimestamp(),
     });
   } else {
@@ -90,9 +97,9 @@ export const toggleReaction = async (messageID, userID, emoji) => {
 };
 
 // Real-time listener with replies and reactions
-export const listenToMessages = (onMessagesUpdate) => {
+export const listenToMessages = (chatRoom_ID, onMessagesUpdate) => {
   const q = query(
-    collection(db, MESSAGES_COLLECTION),
+    collection(db, `ChatRooms/${chatRoom_ID}/Messages`),
     orderBy("createdAt", "desc")
   );
 
@@ -102,7 +109,10 @@ export const listenToMessages = (onMessagesUpdate) => {
         const data = docSnap.data();
 
         const repliesSnap = await getDocs(
-          collection(db, `${MESSAGES_COLLECTION}/${docSnap.id}/Replies`)
+          collection(
+            db,
+            `ChatRooms/${chatRoom_ID}/Messages/${docSnap.id}/Replies`
+          )
         );
 
         return {
