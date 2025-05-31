@@ -73,6 +73,16 @@ export default function RoomSelection({ navigation, user, onRoomSelect }) {
     }
   };
 
+  const handleCreateRoomPress = () => {
+    navigation.navigate("CreateRoomScreen", {
+      userID: user.userID,
+      name: user.name,
+      email: user.email,
+      profilePic: user.profilePic,
+      isGuest: user.isGuest,
+    });
+  };
+
   if (loading) {
     return <ActivityIndicator size="large" color="#444" />;
   }
@@ -114,7 +124,7 @@ export default function RoomSelection({ navigation, user, onRoomSelect }) {
 
       <TouchableOpacity
         style={styles.createButton}
-        onPress={() => navigation.navigate("CreateRoom")}
+        onPress={handleCreateRoomPress}
       >
         <Text style={styles.buttonText}>+ Create New Room</Text>
       </TouchableOpacity>
@@ -154,6 +164,7 @@ export default function RoomSelection({ navigation, user, onRoomSelect }) {
   );
 }
 
+// STYLES
 const styles = StyleSheet.create({
   container: { padding: 16 },
   title: { fontSize: 20, fontWeight: "600", marginBottom: 10 },

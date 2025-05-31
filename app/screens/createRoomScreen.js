@@ -8,7 +8,7 @@ import {
   StyleSheet,
   Alert,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useRoute } from "@react-navigation/native";
 import { createChatRoom } from "../services/chatRoomService";
 import { v4 as uuidv4 } from "uuid";
 
@@ -18,6 +18,8 @@ export default function CreateRoomScreen() {
   const [roomPassword, setRoomPassword] = useState("");
 
   const navigation = useNavigation();
+  const route = useRoute();
+  const { userID, name, email, profilePic, isGuest } = route.params || {};
 
   const handleCreateRoom = async () => {
     if (!roomName.trim()) {
@@ -39,6 +41,11 @@ export default function CreateRoomScreen() {
 
       navigation.replace("Chat", {
         chatRoom_ID: roomID,
+        userID,
+        name,
+        email,
+        profilePic,
+        isGuest: !!isGuest,
       });
     } catch (error) {
       console.error("❌ Error creating room:", error);

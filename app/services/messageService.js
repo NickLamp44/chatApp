@@ -56,7 +56,14 @@ export const sendMessage = async (message, user, chatRoom_ID) => {
     });
   } else {
     await updateDoc(userRef, {
-      messages: arrayUnion(messageRef.id),
+      messages: arrayUnion({
+        messageID: messageRef.id,
+        text: message.text || "",
+        createdAt: serverTimestamp(),
+        chatRoom_ID: chatRoom_ID,
+        hasImage: !!message.image,
+        hasLocation: !!message.location,
+      }),
     });
   }
 
