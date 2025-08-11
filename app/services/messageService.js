@@ -59,7 +59,7 @@ export const sendMessage = async (message, user, chatRoom_ID) => {
       messages: arrayUnion({
         messageID: messageRef.id,
         text: message.text || "",
-        createdAt: serverTimestamp(),
+        sentAt: new Date(),
         chatRoom_ID: chatRoom_ID,
         hasImage: !!message.image,
         hasLocation: !!message.location,
@@ -74,7 +74,7 @@ export const sendMessage = async (message, user, chatRoom_ID) => {
 export const replyToMessage = async (messageID, replyText, user) => {
   const reply = {
     text: replyText,
-    createdAt: serverTimestamp(),
+    sentAt: new Date(),
     user,
   };
 

@@ -91,8 +91,9 @@ export default function Login({ navigation }) {
         value={password}
         onChangeText={setPassword}
       />
-
-      <Button onPress={handleStandardLogin} color="#444daf" title="Login" />
+      <TouchableOpacity style={styles.loginButton} onPress={handleStandardLogin}>
+        <Text style={styles.buttonText}>Login</Text>
+      </TouchableOpacity>
 
       <Text style={styles.orText}>OR</Text>
 
@@ -121,7 +122,6 @@ export default function Login({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  // unchanged styles...
   container: {
     flex: 1,
     backgroundColor: "#fff",
@@ -136,7 +136,7 @@ const styles = StyleSheet.create({
     paddingBottom: 24,
   },
   input: {
-    width: "100%",
+    width: "25%",
     backgroundColor: "#fff",
     marginBottom: 15,
     fontSize: 16,
@@ -151,11 +151,19 @@ const styles = StyleSheet.create({
     marginVertical: 15,
     fontWeight: "600",
   },
+  loginButton: {
+    backgroundColor: "#757083",
+    padding: 12,
+    borderRadius: 8,
+    width: "25%",
+    alignItems: "center",
+    marginBottom: 10,
+  },
   button: {
     backgroundColor: "#757083",
     padding: 12,
     borderRadius: 8,
-    width: "100%",
+    width: "25%",
     alignItems: "center",
     marginBottom: 10,
   },
@@ -165,7 +173,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#DB4437",
     padding: 12,
     borderRadius: 8,
-    width: "100%",
+    width: "25%",
     justifyContent: "center",
     marginBottom: 10,
   },
@@ -175,7 +183,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#3b5998",
     padding: 12,
     borderRadius: 8,
-    width: "100%",
+    width: "25%",
     justifyContent: "center",
     marginBottom: 10,
   },
