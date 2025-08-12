@@ -12,10 +12,7 @@ import {
   serverTimestamp,
 } from "firebase/firestore";
 import { db } from "./firebase";
-import * as Crypto from "expo-crypto";
-
-const hashPassword = async (password) =>
-  await Crypto.digestStringAsync(Crypto.CryptoDigestAlgorithm.SHA256, password);
+import { hashPassword } from "../utils/hashPassword";
 
 export const createChatRoom = async (
   chatRoomID,
@@ -85,6 +82,17 @@ export const joinChatRoom = async (
     const userRef = doc(db, "Users", user_ID);
     const chatRoomRef = doc(db, "ChatRooms", chatRoom_ID);
 
+    // Check if user document exists, create if not (for guest users)
+    const userSnap = await getDoc(userRef);
+    if (!userSnap.exists()) {
+      await setDoc(userRef, {
+        userID: user_ID,
+        chatRoomsJoined: [],
+        createdAt: serverTimestamp(),
+        isGuest: true,
+      });
+    }
+
     const roomSnap = await getDoc(chatRoomRef);
     if (!roomSnap.exists()) throw new Error("Room does not exist.");
 
@@ -107,6 +115,7 @@ export const joinChatRoom = async (
     throw error;
   }
 };
+
 export const getMessages = async (chatRoom_ID) => {
   try {
     const q = query(

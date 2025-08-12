@@ -78,10 +78,18 @@ export default function Login({ navigation }) {
   };
 
   
-  const handleGuestLogin = () => {
-    
-    navigation.navigate("HomeScreen", { isGuest: true });
-  };
+   const handleGuestLogin = () => {
+     
+     const guestUserData = {
+       userID: `guest_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+       name: "", 
+       isGuest: true,
+     };
+
+     console.log("✅ Guest Login", guestUserData);
+
+     navigation.navigate("HomeScreen", guestUserData);
+   };
 
   // ===== UI RENDER =====
   return (

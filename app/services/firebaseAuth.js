@@ -18,11 +18,7 @@ import {
 } from "firebase/firestore";
 import { auth, db } from "./firebase"; // Import Firebase instances
 
-// Helper function to check if a user exists in Firestore
-const getUserByUID = async (uid) => {
-  const userDoc = await getDoc(doc(db, "Users", uid));
-  return userDoc.exists() ? userDoc.data() : null;
-};
+
 
 // Helper function to check if a username is already taken
 const isUsernameTaken = async (userName) => {
