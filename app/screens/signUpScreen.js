@@ -129,12 +129,12 @@ export default function SignUp({ navigation }) {
         <Text style={styles.buttonText}>Sign Up with Google</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity
+      {/* <TouchableOpacity
         style={[styles.button, styles.facebookButton]}
         onPress={handleFacebookSignIn}
       >
         <Text style={styles.buttonText}>Sign Up with Facebook</Text>
-      </TouchableOpacity>
+      </TouchableOpacity> */}
 
       <TouchableOpacity onPress={() => navigation.navigate("Login")}>
         <Text style={styles.loginText}>Already have an account? Log in</Text>
