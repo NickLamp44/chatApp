@@ -13,6 +13,7 @@ import { useNavigation, useRoute } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import RoomSelection from "../components/roomSelector";
 import { seedInitialRooms } from "../utils/seedInitalRooms";
+import NavMenu from "../components/navMenu";
 
 const HomeScreen = () => {
   const navigation = useNavigation();
@@ -101,6 +102,7 @@ const HomeScreen = () => {
       style={styles.container}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
+      <NavMenu />
       <View style={styles.contentContainer}>
         <Text style={styles.title}>Welcome to Circle Up!</Text>
 
