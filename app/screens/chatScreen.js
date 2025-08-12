@@ -1,141 +1,138 @@
-// ChatScreen
-import React, { useState, useEffect, useCallback } from "react";
-import { GiftedChat } from "react-native-gifted-chat";
-import { SafeAreaView } from "react-native-safe-area-context";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Platform } from "react-native";
+import React, { useEffect, useState, useCallback } from "react";
 import {
-  collection,
-  addDoc,
-  onSnapshot,
-  query,
-  orderBy,
-  serverTimestamp,
-  doc,
-  updateDoc,
-  arrayUnion,
-  getDoc,
-  setDoc,
-} from "firebase/firestore";
+  SafeAreaView,
+  TouchableOpacity,
+  Platform,
+  Text,
+  View,
+  Alert,
+} from "react-native";
+import { GiftedChat } from "react-native-gifted-chat";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-// Import components
-import CustomActions from "../components/customAction";
+import {
+  listenToMessages,
+  sendMessage,
+  toggleReaction,
+} from "../services/messageService";
+import { joinChatRoom } from "../services/chatRoomService";
+
 import MessageBubble from "../components/messageBubble";
+import CustomActions from "../components/customAction";
+import ReactBubble from "../components/reactBubble";
 
-// Conditionally load MapView for native platforms
-let MapView;
-if (Platform.OS !== "web") {
-  try {
-    MapView = require("react-native-maps").default;
-  } catch (error) {
-    console.error("❌ Error loading react-native-maps:", error);
-  }
-}
+const ChatScreen = ({ route, navigation }) => {
+  const {
+    chatRoom_ID,
+    userID,
+    name,
+    email,
+    profilePic,
+    storage,
+    isGuest,
+    backgroundColor,
+  } = route.params || {};
 
-const ChatScreen = ({ route }) => {
-  const { userID, name, db, storage, isConnected } = route.params;
   const [messages, setMessages] = useState([]);
+  const [selectedMessage, setSelectedMessage] = useState(null);
+  const [showPicker, setShowPicker] = useState(false);
 
-  console.log("ChatScreen: 🔥 Firestore DB Instance:", db);
+  const user = {
+    _id: userID,
+    name: name || "Guest",
+    email: email || "guest@circleup.app",
+    avatar: profilePic || null,
+  };
 
   useEffect(() => {
-    if (!db) {
-      console.error("❌ Firestore `db` is undefined! Check your imports.");
+    if (!chatRoom_ID) {
+      Alert.alert("Error", "No chat room selected.");
+      navigation.goBack();
       return;
     }
 
-    if (!isConnected) {
-      AsyncStorage.getItem("cachedMessages").then((cachedMessages) => {
-        if (cachedMessages) setMessages(JSON.parse(cachedMessages));
-      });
-      return;
-    }
+    const unsubscribe = listenToMessages(chatRoom_ID, setMessages);
+    if (!isGuest) joinChatRoom(userID, chatRoom_ID);
 
-    const q = query(collection(db, "Messages"), orderBy("createdAt", "desc"));
-    const unsubscribe = onSnapshot(q, async (snapshot) => {
-      const loadedMessages = snapshot.docs.map((doc) => {
-        const data = doc.data();
-        return {
-          _id: doc.id,
-          text: data.text || "",
-          createdAt: data.createdAt?.toDate() || new Date(),
-          user: data.user || { _id: "unknown", name: "Unknown" },
-          image: data.image || null,
-          location: data.location || null,
-        };
-      });
-
-      setMessages(loadedMessages);
-      await AsyncStorage.setItem(
-        "cachedMessages",
-        JSON.stringify(loadedMessages)
-      );
-    });
-
-    return () => unsubscribe();
-  }, [isConnected]);
+    return unsubscribe;
+  }, [chatRoom_ID, userID, isGuest]);
 
   const onSend = useCallback(
     async (newMessages = []) => {
-      setMessages((prevMessages) =>
-        GiftedChat.append(prevMessages, newMessages)
+      setMessages((prev) => GiftedChat.append(prev, newMessages));
+
+      await Promise.all(
+        newMessages.map((msg) => sendMessage(msg, user, chatRoom_ID))
       );
-
-      try {
-        await Promise.all(
-          newMessages.map(async (message) => {
-            const formattedUser = message.user || {
-              _id: userID,
-              name: name || "Unknown",
-            };
-
-            const messageRef = await addDoc(collection(db, "Messages"), {
-              _id: message._id,
-              text: message.text || "",
-              image: message.image || null,
-              location: message.location || null,
-              createdAt: serverTimestamp(),
-              user: formattedUser,
-            });
-
-            console.log("✅ Message added to Firestore:", messageRef.id);
-
-            const userRef = doc(db, "Users", userID);
-            const userDoc = await getDoc(userRef);
-            if (!userDoc.exists()) {
-              await setDoc(userRef, { messages: [messageRef.id] });
-            } else {
-              await updateDoc(userRef, {
-                messages: arrayUnion(messageRef.id),
-              });
-            }
-
-            console.log("✅ User document updated with new message ID.");
-          })
-        );
-      } catch (error) {
-        console.error("❌ Error sending messages:", error);
-      }
     },
-    [userID, name, db]
+    [chatRoom_ID, user]
   );
 
+  const handleAddReaction = async (emoji) => {
+    if (!selectedMessage) return;
+
+    await toggleReaction(selectedMessage._id, user._id, emoji);
+    setSelectedMessage(null);
+    setShowPicker(false);
+  };
+
   return (
-    <SafeAreaView style={{ flex: 1 }}>
+    <SafeAreaView
+      style={{ flex: 1, backgroundColor: backgroundColor || "#fff" }}
+    >
+      {/* Header */}
+      <View
+        style={{
+          paddingTop: Platform.OS === "android" ? 40 : 10,
+          paddingHorizontal: 16,
+          paddingBottom: 10,
+          backgroundColor: backgroundColor || "#fff",
+        }}
+      >
+        <TouchableOpacity
+          onPress={() =>
+            navigation.replace("HomeScreen", {
+              userID,
+              name,
+              email,
+              profilePic,
+              isGuest,
+            })
+          }
+        >
+          <Text style={{ fontSize: 16, color: "#007AFF" }}>← Back</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Chat UI */}
       <GiftedChat
         messages={messages}
         onSend={onSend}
-        user={{ _id: userID, name }}
-        renderBubble={(props) => <MessageBubble {...props} userID={userID} />}
-        renderAvatar={() => null}
+        user={user}
+        renderBubble={(props) => <MessageBubble {...props} user={user} />}
+        renderAvatar={null}
         renderActions={(props) => (
-          <CustomActions
-            {...props}
-            onSend={onSend}
-            storage={storage}
-            userID={userID}
-          />
+          <CustomActions {...props} user={user} storage={storage} />
         )}
+        renderMessage={(props) => (
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onLongPress={() => {
+              setSelectedMessage(props.currentMessage);
+              setShowPicker(true);
+            }}
+          >
+            <MessageBubble {...props} user={user} />
+          </TouchableOpacity>
+        )}
+        keyboardShouldPersistTaps="handled"
+      />
+
+      {/* Reactions */}
+      <ReactBubble
+        visible={showPicker}
+        onSelect={handleAddReaction}
+        onClose={() => setShowPicker(false)}
       />
     </SafeAreaView>
   );

@@ -1,68 +1,119 @@
-// HomeScreen
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   StyleSheet,
   View,
   Text,
   TextInput,
   TouchableOpacity,
-  ImageBackground,
   KeyboardAvoidingView,
   Platform,
   Alert,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
-import { getAuth, signInAnonymously } from "firebase/auth";
+import { useNavigation, useRoute } from "@react-navigation/native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import RoomSelection from "../components/roomSelector";
+import { seedInitialRooms } from "../utils/seedInitalRooms";
+import NavMenu from "../components/navMenu";
 
 const HomeScreen = () => {
-  const [name, setName] = useState("");
-  const [backgroundColor, setBackgroundColor] = useState("#090C08");
   const navigation = useNavigation();
-  const auth = getAuth();
+  const route = useRoute();
 
-  const signInUser = async () => {
-    if (!name.trim()) {
-      Alert.alert("⚠️ Error", "Please enter a name before proceeding.");
-      return;
-    }
+  const [userID, setUserID] = useState(null);
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [profilePic, setProfilePic] = useState("");
+  const [isGuest, setIsGuest] = useState(false);
+  const [backgroundColor, setBackgroundColor] = useState("#090C08");
+  const [selectedRoomID, setSelectedRoomID] = useState(null);
 
-    try {
-      const result = await signInAnonymously(auth);
-      navigation.replace("Chat", {
-        userID: result.user.uid,
-        name: name,
-        backgroundColor: backgroundColor,
-      });
-      Alert.alert("✅ Success", "Signed in as a guest!");
-    } catch (error) {
-      console.error("🔥 Error during anonymous sign-in:", error);
-      Alert.alert("❌ Sign-in Failed", "Please try again later.");
-    }
-  };
+  useEffect(() => {
+    const loadUser = async () => {
+      if (route.params) {
+        const { userID, name, email, profilePic, isGuest } = route.params;
+        setUserID(userID);
+        setName(name);
+        setEmail(email);
+        setProfilePic(profilePic);
+        setIsGuest(!!isGuest);
+      } else {
+        const user = await AsyncStorage.getItem("user");
+        if (user) {
+          const parsed = JSON.parse(user);
+          setUserID(parsed.userID);
+          setName(parsed.name);
+          setBackgroundColor(parsed.backgroundColor || "#090C08");
+          setIsGuest(false);
+        }
+      }
+    };
 
-  // Handle Enter key submission for better UX
-  const handleKeyPress = (e) => {
-    if (e.nativeEvent.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      signInUser();
-    }
+    loadUser();
+  }, [route.params]);
+
+  const handleRoomSelect = (roomID) => {
+    console.log("🟡 onRoomSelect triggered with:", roomID);
+    setSelectedRoomID(roomID);
   };
 
   const colors = ["#090C08", "#474056", "#8A95A5", "#B9C6AE"];
+
+  const proceedToChat = async () => {
+    if (!selectedRoomID) {
+      Alert.alert("⚠️ Select a Room", "Please select a chat room first.");
+      return;
+    }
+
+    if (isGuest && !name.trim()) {
+      Alert.alert("⚠️ Name required", "Please enter a display name.");
+      return;
+    }
+
+    await AsyncStorage.setItem(
+      "user",
+      JSON.stringify({ userID, name, backgroundColor })
+    );
+
+    navigation.replace("Chat", {
+      userID,
+      name,
+      backgroundColor,
+      isGuest,
+      chatRoom_ID: selectedRoomID,
+      email,
+      profilePic,
+    });
+
+    console.log("➡️ Proceeding to Chat with:", {
+      selectedRoomID,
+      userID,
+      name,
+    });
+  };
+
+  const handleKeyPress = (e) => {
+    if (Platform.OS === "web" && e.nativeEvent.key === "Enter") {
+      proceedToChat();
+    }
+  };
 
   return (
     <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
-      <ImageBackground
-        source={require("../../images/Background.png")}
-        style={styles.background}
-        resizeMode="cover"
-      >
-        <View style={styles.contentContainer}>
-          <Text style={styles.title}>Welcome to ChatApp!</Text>
-          <View style={styles.inputContainer}>
+      <NavMenu />
+      <View style={styles.contentContainer}>
+        <Text style={styles.title}>Welcome to Circle Up!</Text>
+
+        <RoomSelection
+          navigation={navigation}
+          user={{ userID, name, email, profilePic }}
+          onRoomSelect={handleRoomSelect}
+        />
+
+        <View style={styles.inputContainer}>
+          {isGuest && (
             <TextInput
               style={styles.textInput}
               value={name}
@@ -71,51 +122,36 @@ const HomeScreen = () => {
               placeholderTextColor="#757083"
               onKeyPress={handleKeyPress}
               multiline={true}
-              accessibilityLabel="Enter your name"
             />
-            <Text style={styles.colorText}>Choose Background Color:</Text>
-            <View style={styles.colorContainer}>
-              {colors.map((color) => (
-                <TouchableOpacity
-                  key={color}
-                  style={[
-                    styles.colorOption,
-                    { backgroundColor: color },
-                    backgroundColor === color && styles.selectedColor,
-                  ]}
-                  onPress={() => setBackgroundColor(color)}
-                  accessibilityLabel={`Select background color ${color}`}
-                />
-              ))}
-            </View>
+          )}
 
-            {/* To Chat Screen */}
-            <TouchableOpacity style={styles.button} onPress={signInUser}>
-              <Text style={styles.buttonText}>Start Chatting</Text>
-            </TouchableOpacity>
+          <Text style={styles.colorText}>Choose Background Color:</Text>
 
-            {/* To Login Screen */}
-            <TouchableOpacity
-              style={[styles.button, styles.loginButton]}
-              onPress={() => navigation.navigate("Login")}
-            >
-              <Text style={styles.buttonText}>Login with Account</Text>
-            </TouchableOpacity>
+          <View style={styles.colorContainer}>
+            {colors.map((color) => (
+              <TouchableOpacity
+                key={color}
+                style={[
+                  styles.colorOption,
+                  { backgroundColor: color },
+                  backgroundColor === color && styles.selectedColor,
+                ]}
+                onPress={() => setBackgroundColor(color)}
+              />
+            ))}
           </View>
+
+          <TouchableOpacity style={styles.button} onPress={proceedToChat}>
+            <Text style={styles.buttonText}>Start Chatting</Text>
+          </TouchableOpacity>
         </View>
-      </ImageBackground>
+      </View>
     </KeyboardAvoidingView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  background: {
-    flex: 1,
-    justifyContent: "center",
-  },
+  container: { flex: 1 },
   contentContainer: {
     flex: 1,
     justifyContent: "flex-end",
@@ -125,7 +161,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 45,
     fontWeight: "600",
-    color: "#FFFFFF",
+    color: "#5d0707",
     marginBottom: 40,
   },
   inputContainer: {
@@ -174,9 +210,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     width: "100%",
     marginVertical: 5,
-  },
-  loginButton: {
-    backgroundColor: "#4CAF50",
   },
   buttonText: {
     color: "#FFFFFF",

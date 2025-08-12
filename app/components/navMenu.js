@@ -1,41 +1,36 @@
-// Menu for navigating the chat app ( Home , *?Chats? temp if i want to track what chats a user has joined and sent messages in* , Profile, Log Out)
-import React from "react";
+"use client";
 import { View, Text, TouchableOpacity, StyleSheet, Alert } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import { signOut } from "firebase/auth";
-import { auth } from "../services/firebaseAuth"; // Ensure correct import
+import { logoutUser } from "../services/firebaseAuth";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function NavMenu() {
   const navigation = useNavigation();
 
-  // Function to log out the user
   const handleLogout = async () => {
     try {
-      await signOut(auth);
-      Alert.alert("Logged Out", "You have been logged out successfully.");
+      await logoutUser(); // Call Firebase logout
+      await AsyncStorage.clear(); // Clear stored user data
       navigation.reset({
         index: 0,
-        routes: [{ name: "Login" }], // Reset stack & go to Login
-      });
+        routes: [{ name: "Login" }],
+      }); // Reset navigation stack to login screen
     } catch (error) {
-      Alert.alert("Logout Failed", error.message);
+      Alert.alert("Logout Error", error.message);
     }
   };
 
   return (
     <View style={styles.menuContainer}>
-      <TouchableOpacity onPress={() => navigation.navigate("Home")}>
-        <Text style={styles.menuItem}>🏠 Home</Text>
-      </TouchableOpacity>
-      <TouchableOpacity onPress={() => navigation.navigate("Profile")}>
-        <Text style={styles.menuItem}>👤 Profile</Text>
-      </TouchableOpacity>
-      <TouchableOpacity onPress={() => navigation.navigate("Chat")}>
-        <Text style={styles.menuItem}>💬 Chat</Text>
-      </TouchableOpacity>
-      <TouchableOpacity onPress={handleLogout}>
-        <Text style={[styles.menuItem, styles.logoutText]}>🚪 Logout</Text>
-      </TouchableOpacity>
+      <View style={styles.leftSection}>
+        <Text style={styles.appTitle}>CircleUp</Text>
+      </View>
+
+      <View style={styles.rightSection}>
+        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+          <Text style={styles.logoutText}>🚪 Logout</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
@@ -43,15 +38,40 @@ export default function NavMenu() {
 const styles = StyleSheet.create({
   menuContainer: {
     flexDirection: "row",
-    justifyContent: "space-around",
-    paddingVertical: 10,
-    backgroundColor: "#eee",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    backgroundColor: "#f8f9fa",
+    borderBottomWidth: 1,
+    borderBottomColor: "#e9ecef",
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
   },
-  menuItem: {
-    fontSize: 16,
+  leftSection: {
+    flex: 1,
+    justifyContent: "flex-start",
+  },
+  rightSection: {
+    justifyContent: "flex-end",
+  },
+  appTitle: {
+    fontSize: 18,
     fontWeight: "bold",
+    color: "#2c3e50",
+  },
+  logoutButton: {
+    backgroundColor: "#606060",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
   },
   logoutText: {
-    color: "red",
+    color: "#ffffff",
+    fontSize: 14,
+    fontWeight: "600",
   },
 });
