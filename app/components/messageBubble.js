@@ -1,9 +1,55 @@
-import React from "react";
 import { View, Text, Image, StyleSheet } from "react-native";
+
+
+const getAvatarColor = (userId) => {
+  const colors = [
+    "#FF6B6B",
+    "#4ECDC4",
+    "#45B7D1",
+    "#96CEB4",
+    "#FFEAA7",
+    "#DDA0DD",
+    "#98D8C8",
+    "#F7DC6F",
+    "#BB8FCE",
+    "#85C1E9",
+    "#F8C471",
+    "#82E0AA",
+    "#F1948A",
+    "#85C1E9",
+    "#D7BDE2",
+  ];
+
+ 
+  let hash = 0;
+  for (let i = 0; i < userId.length; i++) {
+    hash = userId.charCodeAt(i) + ((hash << 5) - hash);
+  }
+
+  return colors[Math.abs(hash) % colors.length];
+};
+
+
+const getUserInitials = (name) => {
+  if (!name) return "?";
+
+  const names = name.trim().split(" ");
+  if (names.length === 1) {
+    return names[0].charAt(0).toUpperCase();
+  }
+
+  return (names[0].charAt(0) + names[names.length - 1].charAt(0)).toUpperCase();
+};
 
 const MessageBubble = ({ currentMessage, user }) => {
   const messageUser = currentMessage.user;
   const isUser = messageUser?._id === user._id;
+
+  // Generate avatar props
+  const avatarColor = messageUser?._id
+    ? getAvatarColor(messageUser._id)
+    : "#CCCCCC";
+  const initials = getUserInitials(messageUser?.name);
 
   return (
     <View
@@ -12,8 +58,10 @@ const MessageBubble = ({ currentMessage, user }) => {
         isUser ? styles.rightContainer : styles.leftContainer,
       ]}
     >
-      {!isUser && messageUser?.avatar && (
-        <Image source={{ uri: messageUser.avatar }} style={styles.avatar} />
+      {!isUser && (
+        <View style={[styles.avatar, { backgroundColor: avatarColor }]}>
+          <Text style={styles.avatarText}>{initials}</Text>
+        </View>
       )}
 
       <View
@@ -59,10 +107,25 @@ const styles = StyleSheet.create({
   leftContainer: { alignSelf: "flex-start" },
   rightContainer: { alignSelf: "flex-end", flexDirection: "row-reverse" },
 
-  avatar: { width: 30, height: 30, borderRadius: 15, marginRight: 8 },
+  avatar: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    marginRight: 8,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  avatarText: {
+    color: "white",
+    fontSize: 12,
+    fontWeight: "bold",
+    textAlign: "center",
+  },
 
   bubble: {
     padding: 10,
+    margin: 10,
     borderRadius: 15,
   },
   leftBubble: { backgroundColor: "#e1ffc7" },

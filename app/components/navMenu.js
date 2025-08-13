@@ -9,12 +9,12 @@ export default function NavMenu() {
 
   const handleLogout = async () => {
     try {
-      await logoutUser(); // Call Firebase logout
-      await AsyncStorage.clear(); // Clear stored user data
+      await logoutUser(); 
+      await AsyncStorage.clear(); 
       navigation.reset({
         index: 0,
         routes: [{ name: "Login" }],
-      }); // Reset navigation stack to login screen
+      }); 
     } catch (error) {
       Alert.alert("Logout Error", error.message);
     }

@@ -1,4 +1,6 @@
-import React, { useEffect, useState, useCallback } from "react";
+"use client";
+
+import { useEffect, useState, useCallback } from "react";
 import {
   SafeAreaView,
   TouchableOpacity,
@@ -6,9 +8,9 @@ import {
   Text,
   View,
   Alert,
+  StyleSheet,
 } from "react-native";
 import { GiftedChat } from "react-native-gifted-chat";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import {
   listenToMessages,
@@ -65,7 +67,7 @@ const ChatScreen = ({ route, navigation }) => {
         newMessages.map((msg) => sendMessage(msg, user, chatRoom_ID))
       );
     },
-    [chatRoom_ID, user]
+    [chatRoom_ID]
   );
 
   const handleAddReaction = async (emoji) => {
@@ -78,18 +80,14 @@ const ChatScreen = ({ route, navigation }) => {
 
   return (
     <SafeAreaView
-      style={{ flex: 1, backgroundColor: backgroundColor || "#fff" }}
+      style={[styles.container, { backgroundColor: backgroundColor || "#fff" }]}
     >
       {/* Header */}
       <View
-        style={{
-          paddingTop: Platform.OS === "android" ? 40 : 10,
-          paddingHorizontal: 16,
-          paddingBottom: 10,
-          backgroundColor: backgroundColor || "#fff",
-        }}
+        style={[styles.header, { backgroundColor: backgroundColor || "#fff" }]}
       >
         <TouchableOpacity
+          style={styles.backButton}
           onPress={() =>
             navigation.replace("HomeScreen", {
               userID,
@@ -99,8 +97,9 @@ const ChatScreen = ({ route, navigation }) => {
               isGuest,
             })
           }
+          activeOpacity={0.7}
         >
-          <Text style={{ fontSize: 16, color: "#007AFF" }}>← Back</Text>
+          <Text style={styles.backText}>← Back</Text>
         </TouchableOpacity>
       </View>
 
@@ -126,6 +125,7 @@ const ChatScreen = ({ route, navigation }) => {
           </TouchableOpacity>
         )}
         keyboardShouldPersistTaps="handled"
+        messagesContainerStyle={styles.messagesContainer}
       />
 
       {/* Reactions */}
@@ -137,5 +137,30 @@ const ChatScreen = ({ route, navigation }) => {
     </SafeAreaView>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  header: {
+    paddingTop: Platform.OS === "android" ? 40 : 10,
+    paddingHorizontal: 16,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#e0e0e0",
+  },
+  backButton: {
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+  },
+  backText: {
+    fontSize: 16,
+    color: "#007AFF",
+    fontWeight: "500",
+  },
+  messagesContainer: {
+    paddingBottom: 8,
+  },
+});
 
 export default ChatScreen;
