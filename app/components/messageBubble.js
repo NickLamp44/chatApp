@@ -1,6 +1,5 @@
 import { View, Text, Image, StyleSheet } from "react-native";
 
-
 const getAvatarColor = (userId) => {
   const colors = [
     "#FF6B6B",
@@ -20,7 +19,6 @@ const getAvatarColor = (userId) => {
     "#D7BDE2",
   ];
 
- 
   let hash = 0;
   for (let i = 0; i < userId.length; i++) {
     hash = userId.charCodeAt(i) + ((hash << 5) - hash);
@@ -28,7 +26,6 @@ const getAvatarColor = (userId) => {
 
   return colors[Math.abs(hash) % colors.length];
 };
-
 
 const getUserInitials = (name) => {
   if (!name) return "?";
@@ -44,6 +41,16 @@ const getUserInitials = (name) => {
 const MessageBubble = ({ currentMessage, user }) => {
   const messageUser = currentMessage.user;
   const isUser = messageUser?._id === user._id;
+
+  // Add comprehensive logging for message rendering
+  console.log("[v0] MessageBubble rendering message:", {
+    messageId: currentMessage._id,
+    hasImage: !!currentMessage.image,
+    imageUrl: currentMessage.image,
+    messageUser: messageUser,
+    currentUser: user,
+    isUser: isUser,
+  });
 
   // Generate avatar props
   const avatarColor = messageUser?._id
@@ -80,7 +87,34 @@ const MessageBubble = ({ currentMessage, user }) => {
         )}
 
         {!!currentMessage.image && (
-          <Image source={{ uri: currentMessage.image }} style={styles.image} />
+          <View>
+            {/* Add comprehensive image debugging and error handling */}
+            <Image
+              source={{ uri: currentMessage.image }}
+              style={styles.image}
+              onLoad={() =>
+                console.log(
+                  "[v0] Image loaded successfully:",
+                  currentMessage.image
+                )
+              }
+              onError={(error) =>
+                console.log(
+                  "[v0] Image load error:",
+                  error.nativeEvent?.error || error
+                )
+              }
+              onLoadStart={() =>
+                console.log("[v0] Image load started:", currentMessage.image)
+              }
+              onLoadEnd={() =>
+                console.log("[v0] Image load ended:", currentMessage.image)
+              }
+            />
+            <Text style={styles.debugText}>
+              Image URL: {currentMessage.image}
+            </Text>
+          </View>
         )}
 
         {Array.isArray(currentMessage.likedBy) &&

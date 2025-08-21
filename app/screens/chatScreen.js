@@ -35,6 +35,9 @@ const ChatScreen = ({ route, navigation }) => {
     backgroundColor,
   } = route.params || {};
 
+  console.log("[v0] ChatScreen initialized with storage:", !!storage);
+  console.log("[v0] Route params storage:", route.params?.storage);
+
   const [messages, setMessages] = useState([]);
   const [selectedMessage, setSelectedMessage] = useState(null);
   const [showPicker, setShowPicker] = useState(false);
@@ -84,7 +87,7 @@ const ChatScreen = ({ route, navigation }) => {
     >
       {/* Header */}
       <View
-        style={[styles.header, { backgroundColor: backgroundColor || "#fff" }]}
+        style={[styles.header, { backgroundColor: "#fff" }]}
       >
         <TouchableOpacity
           style={styles.backButton}
@@ -154,12 +157,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
   },
   backText: {
-    fontSize: 16,
+    fontSize: 24,
     color: "#007AFF",
     fontWeight: "500",
   },
   messagesContainer: {
-    paddingBottom: 8,
+    padding: 16,
   },
 });
 
