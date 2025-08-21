@@ -1,5 +1,3 @@
-"use client";
-
 import { useEffect, useState, useCallback } from "react";
 import {
   SafeAreaView,
@@ -11,6 +9,7 @@ import {
   StyleSheet,
 } from "react-native";
 import { GiftedChat } from "react-native-gifted-chat";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import {
   listenToMessages,
@@ -24,82 +23,76 @@ import CustomActions from "../components/customAction";
 import ReactBubble from "../components/reactBubble";
 
 const ChatScreen = ({ route, navigation }) => {
-  const {
-    chatRoom_ID,
-    userID,
-    name,
-    email,
-    profilePic,
-    storage,
-    isGuest,
-    backgroundColor,
-  } = route.params || {};
-
-  console.log("[v0] ChatScreen initialized with storage:", !!storage);
-  console.log("[v0] Route params storage:", route.params?.storage);
-
   const [messages, setMessages] = useState([]);
   const [selectedMessage, setSelectedMessage] = useState(null);
   const [showPicker, setShowPicker] = useState(false);
+  const [user, setUser] = useState(null);
+  const [chatRoomID, setChatRoomID] = useState(route.params?.chatRoom_ID);
 
-  const user = {
-    _id: userID,
-    name: name || "Guest",
-    email: email || "guest@circleup.app",
-    avatar: profilePic || null,
-  };
-
+  // Rehydrate user on mount
   useEffect(() => {
-    if (!chatRoom_ID) {
-      Alert.alert("Error", "No chat room selected.");
-      navigation.goBack();
-      return;
-    }
+    const loadUser = async () => {
+      let userData = null;
+      const saved = await AsyncStorage.getItem("user");
+      if (saved) userData = JSON.parse(saved);
 
-    const unsubscribe = listenToMessages(chatRoom_ID, setMessages);
-    if (!isGuest) joinChatRoom(userID, chatRoom_ID);
+      if (!userData) {
+        Alert.alert("Error", "No user found, returning home.");
+        navigation.replace("HomeScreen");
+        return;
+      }
+
+      setUser({
+        _id: userData.userID,
+        name: userData.name || "Guest",
+        email: userData.email || "guest@circleup.app",
+        avatar: userData.profilePic || null,
+      });
+
+      if (!chatRoomID && route.params?.chatRoom_ID) {
+        setChatRoomID(route.params.chatRoom_ID);
+      }
+    };
+
+    loadUser();
+  }, [route.params]);
+
+  // Setup message listener
+  useEffect(() => {
+    if (!chatRoomID || !user) return;
+
+    const unsubscribe = listenToMessages(chatRoomID, setMessages);
+    if (!user.isGuest) joinChatRoom(user._id, chatRoomID);
 
     return unsubscribe;
-  }, [chatRoom_ID, userID, isGuest]);
+  }, [chatRoomID, user]);
 
   const onSend = useCallback(
     async (newMessages = []) => {
       setMessages((prev) => GiftedChat.append(prev, newMessages));
-
       await Promise.all(
-        newMessages.map((msg) => sendMessage(msg, user, chatRoom_ID))
+        newMessages.map((msg) => sendMessage(msg, user, chatRoomID))
       );
     },
-    [chatRoom_ID]
+    [chatRoomID, user]
   );
 
   const handleAddReaction = async (emoji) => {
     if (!selectedMessage) return;
-
     await toggleReaction(selectedMessage._id, user._id, emoji);
     setSelectedMessage(null);
     setShowPicker(false);
   };
 
+  if (!user) return null; // Loading state
+
   return (
-    <SafeAreaView
-      style={[styles.container, { backgroundColor: backgroundColor || "#fff" }]}
-    >
+    <SafeAreaView style={[styles.container, { backgroundColor: "#fff" }]}>
       {/* Header */}
-      <View
-        style={[styles.header, { backgroundColor: "#fff" }]}
-      >
+      <View style={[styles.header, { backgroundColor: "#fff" }]}>
         <TouchableOpacity
           style={styles.backButton}
-          onPress={() =>
-            navigation.replace("HomeScreen", {
-              userID,
-              name,
-              email,
-              profilePic,
-              isGuest,
-            })
-          }
+          onPress={() => navigation.replace("HomeScreen")}
           activeOpacity={0.7}
         >
           <Text style={styles.backText}>← Back</Text>
@@ -113,9 +106,7 @@ const ChatScreen = ({ route, navigation }) => {
         user={user}
         renderBubble={(props) => <MessageBubble {...props} user={user} />}
         renderAvatar={null}
-        renderActions={(props) => (
-          <CustomActions {...props} user={user} storage={storage} />
-        )}
+        renderActions={(props) => <CustomActions {...props} user={user} />}
         renderMessage={(props) => (
           <TouchableOpacity
             activeOpacity={0.7}
@@ -142,9 +133,7 @@ const ChatScreen = ({ route, navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
+  container: { flex: 1 },
   header: {
     paddingTop: Platform.OS === "android" ? 40 : 10,
     paddingHorizontal: 16,
