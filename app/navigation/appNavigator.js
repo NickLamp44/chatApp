@@ -7,7 +7,7 @@ import CreateRoomScreen from "../screens/createRoomScreen";
 
 const Stack = createStackNavigator();
 
-export default function AppNavigator({ db, storage, isConnected }) {
+export default function AppNavigator({ isConnected }) {
   return (
     <Stack.Navigator
       initialRouteName="Login"
@@ -20,7 +20,7 @@ export default function AppNavigator({ db, storage, isConnected }) {
       <Stack.Screen
         name="Chat"
         component={ChatScreen}
-        initialParams={{ db, storage, isConnected }}
+        initialParams={{ isConnected }} 
       />
     </Stack.Navigator>
   );

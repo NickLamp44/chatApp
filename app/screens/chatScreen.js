@@ -32,25 +32,30 @@ const ChatScreen = ({ route, navigation }) => {
   // Rehydrate user on mount
   useEffect(() => {
     const loadUser = async () => {
-      let userData = null;
-      const saved = await AsyncStorage.getItem("user");
-      if (saved) userData = JSON.parse(saved);
+      try {
+        const saved = await AsyncStorage.getItem("user");
+        if (!saved) {
+          Alert.alert("Error", "No user found, returning home.");
+          navigation.replace("HomeScreen");
+          return;
+        }
 
-      if (!userData) {
-        Alert.alert("Error", "No user found, returning home.");
+        const userData = JSON.parse(saved);
+
+        setUser({
+          _id: userData.userID,
+          name: userData.name || "Guest",
+          email: userData.email || "guest@circleup.app",
+          avatar: userData.profilePic || null,
+          isGuest: userData.isGuest || false, 
+        });
+
+        if (!chatRoomID && route.params?.chatRoom_ID) {
+          setChatRoomID(route.params.chatRoom_ID);
+        }
+      } catch (err) {
+        console.error("Failed to load user", err);
         navigation.replace("HomeScreen");
-        return;
-      }
-
-      setUser({
-        _id: userData.userID,
-        name: userData.name || "Guest",
-        email: userData.email || "guest@circleup.app",
-        avatar: userData.profilePic || null,
-      });
-
-      if (!chatRoomID && route.params?.chatRoom_ID) {
-        setChatRoomID(route.params.chatRoom_ID);
       }
     };
 
@@ -62,11 +67,16 @@ const ChatScreen = ({ route, navigation }) => {
     if (!chatRoomID || !user) return;
 
     const unsubscribe = listenToMessages(chatRoomID, setMessages);
-    if (!user.isGuest) joinChatRoom(user._id, chatRoomID);
+
+    
+    if (!user.isGuest) {
+      joinChatRoom(user._id, chatRoomID);
+    }
 
     return unsubscribe;
   }, [chatRoomID, user]);
 
+  // Send new messages
   const onSend = useCallback(
     async (newMessages = []) => {
       setMessages((prev) => GiftedChat.append(prev, newMessages));
@@ -77,6 +87,7 @@ const ChatScreen = ({ route, navigation }) => {
     [chatRoomID, user]
   );
 
+  // Add emoji reactions
   const handleAddReaction = async (emoji) => {
     if (!selectedMessage) return;
     await toggleReaction(selectedMessage._id, user._id, emoji);

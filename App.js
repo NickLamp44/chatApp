@@ -1,36 +1,28 @@
-import React, { useEffect, useMemo, useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import { Alert } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import AppNavigator from "./app/navigation/appNavigator";
-import NetInfo, { useNetInfo } from "@react-native-community/netinfo";
-import { db, storage } from "./app/services/firebase";
+import { useNetInfo } from "@react-native-community/netinfo";
 
 const App = () => {
-  const connectionStatus = useNetInfo();
+  const { isConnected } = useNetInfo();
   const hasShownAlert = useRef(false);
 
   useEffect(() => {
-    if (connectionStatus.isConnected === false && !hasShownAlert.current) {
+    if (isConnected === false && !hasShownAlert.current) {
       Alert.alert(
         "⚠️ Connection Lost",
         "You're offline. Some features may not work."
       );
       hasShownAlert.current = true;
-    } else if (connectionStatus.isConnected === true) {
-      hasShownAlert.current = false; // Reset alert state
+    } else if (isConnected === true) {
+      hasShownAlert.current = false;
     }
-  }, [connectionStatus.isConnected]);
-
-  const memoizedDb = useMemo(() => db, []);
-  const memoizedStorage = useMemo(() => storage, []);
+  }, [isConnected]);
 
   return (
     <NavigationContainer>
-      <AppNavigator
-        db={memoizedDb}
-        storage={memoizedStorage}
-        isConnected={connectionStatus.isConnected}
-      />
+      <AppNavigator isConnected={!!isConnected} />
     </NavigationContainer>
   );
 };
