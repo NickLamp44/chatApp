@@ -13,8 +13,8 @@ import {
   orderBy,
   onSnapshot,
 } from "firebase/firestore";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { db } from "./firebase";
+import { storeMessages } from "./storageService";
 
 // Send a new message
 export const sendMessage = async (message, user, chatRoom_ID) => {
@@ -138,8 +138,10 @@ export const listenToMessages = (chatRoom_ID, onMessagesUpdate) => {
       })
     );
 
-    // Cache locally
-    await AsyncStorage.setItem("cachedMessages", JSON.stringify(messages));
+    // Cache locally via storageService
+    await storeMessages(messages);
+
+    // Update UI
     onMessagesUpdate(messages);
   });
 };

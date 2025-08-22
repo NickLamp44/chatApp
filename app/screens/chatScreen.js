@@ -17,6 +17,7 @@ import {
   toggleReaction,
 } from "../services/messageService";
 import { joinChatRoom } from "../services/chatRoomService";
+import { getStoredMessages } from "../services/storageService";
 
 import MessageBubble from "../components/messageBubble";
 import CustomActions from "../components/customAction";
@@ -29,7 +30,9 @@ const ChatScreen = ({ route, navigation }) => {
   const [user, setUser] = useState(null);
   const [chatRoomID, setChatRoomID] = useState(route.params?.chatRoom_ID);
 
-  // Rehydrate user on mount
+  /**
+   * Rehydrate user from AsyncStorage
+   */
   useEffect(() => {
     const loadUser = async () => {
       try {
@@ -47,14 +50,14 @@ const ChatScreen = ({ route, navigation }) => {
           name: userData.name || "Guest",
           email: userData.email || "guest@circleup.app",
           avatar: userData.profilePic || null,
-          isGuest: userData.isGuest || false, 
+          isGuest: userData.isGuest || false,
         });
 
         if (!chatRoomID && route.params?.chatRoom_ID) {
           setChatRoomID(route.params.chatRoom_ID);
         }
       } catch (err) {
-        console.error("Failed to load user", err);
+        console.error("❌ Failed to load user", err);
         navigation.replace("HomeScreen");
       }
     };
@@ -62,40 +65,67 @@ const ChatScreen = ({ route, navigation }) => {
     loadUser();
   }, [route.params]);
 
-  // Setup message listener
+  /**
+   * Load cached messages first, then subscribe to Firestore
+   */
   useEffect(() => {
     if (!chatRoomID || !user) return;
 
+    // Step 1: hydrate cached messages instantly
+    const hydrateFromCache = async () => {
+      const cached = await getStoredMessages();
+      if (cached.length > 0) {
+        setMessages(cached);
+      }
+    };
+
+    hydrateFromCache();
+
+    // Step 2: live listener
     const unsubscribe = listenToMessages(chatRoomID, setMessages);
 
-    
+    // Step 3: ensure user is joined to room
     if (!user.isGuest) {
-      joinChatRoom(user._id, chatRoomID);
+      joinChatRoom(user._id, chatRoomID).catch((err) =>
+        console.error("❌ Failed to join chat room", err)
+      );
     }
 
     return unsubscribe;
   }, [chatRoomID, user]);
 
-  // Send new messages
+  /**
+   * Send new messages
+   */
   const onSend = useCallback(
     async (newMessages = []) => {
       setMessages((prev) => GiftedChat.append(prev, newMessages));
-      await Promise.all(
-        newMessages.map((msg) => sendMessage(msg, user, chatRoomID))
-      );
+      try {
+        await Promise.all(
+          newMessages.map((msg) => sendMessage(msg, user, chatRoomID))
+        );
+      } catch (err) {
+        console.error("❌ Failed to send message", err);
+      }
     },
     [chatRoomID, user]
   );
 
-  // Add emoji reactions
+  /**
+   * Add emoji reactions
+   */
   const handleAddReaction = async (emoji) => {
     if (!selectedMessage) return;
-    await toggleReaction(selectedMessage._id, user._id, emoji);
+    try {
+      await toggleReaction(chatRoomID, selectedMessage._id, user._id, emoji);
+    } catch (err) {
+      console.error("❌ Failed to toggle reaction", err);
+    }
     setSelectedMessage(null);
     setShowPicker(false);
   };
 
-  if (!user) return null; // Loading state
+  if (!user) return null; // Still loading user
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: "#fff" }]}>

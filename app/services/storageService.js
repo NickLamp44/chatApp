@@ -1,21 +1,38 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const storeMessages = async (messages) => {
+const MESSAGES_KEY = "chatMessages";
+
+/**
+ * Store chat messages locally
+ */
+export const storeMessages = async (messages) => {
   try {
-    await AsyncStorage.setItem("chatMessages", JSON.stringify(messages));
+    await AsyncStorage.setItem(MESSAGES_KEY, JSON.stringify(messages));
   } catch (error) {
-    console.error("Failed to store messages", error);
+    console.error("❌ Failed to store messages", error);
   }
 };
 
-const getStoredMessages = async () => {
+/**
+ * Retrieve cached messages
+ */
+export const getStoredMessages = async () => {
   try {
-    const messages = await AsyncStorage.getItem("chatMessages");
-    return messages ? JSON.parse(messages) : [];
+    const stored = await AsyncStorage.getItem(MESSAGES_KEY);
+    return stored ? JSON.parse(stored) : [];
   } catch (error) {
-    console.error("Failed to retrieve messages", error);
+    console.error("❌ Failed to retrieve messages", error);
     return [];
   }
 };
 
-export { storeMessages, getStoredMessages };
+/**
+ * Clear cached messages
+ */
+export const clearStoredMessages = async () => {
+  try {
+    await AsyncStorage.removeItem(MESSAGES_KEY);
+  } catch (error) {
+    console.error("❌ Failed to clear messages", error);
+  }
+};
