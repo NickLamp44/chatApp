@@ -82,13 +82,12 @@ const MessageBubble = ({ currentMessage, user }) => {
           <Text style={styles.replyText}>↪️ Replying to message...</Text>
         )}
 
-        {!!currentMessage.text && (
+        {!!currentMessage.text && !currentMessage.image && (
           <Text style={styles.text}>{currentMessage.text}</Text>
         )}
 
         {!!currentMessage.image && (
           <View>
-            {/* Add comprehensive image debugging and error handling */}
             <Image
               source={{ uri: currentMessage.image }}
               style={styles.image}
@@ -111,9 +110,6 @@ const MessageBubble = ({ currentMessage, user }) => {
                 console.log("[v0] Image load ended:", currentMessage.image)
               }
             />
-            <Text style={styles.debugText}>
-              Image URL: {currentMessage.image}
-            </Text>
           </View>
         )}
 

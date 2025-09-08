@@ -81,7 +81,7 @@ export default function Login({ navigation }) {
 
   // Handles Guest login
   const handleGuestLogin = async () => {
-    // ✅ Ensure Firebase session is cleared
+    // Ensure Firebase session is cleared
     await signOut(auth);
 
     const guestUserData = {

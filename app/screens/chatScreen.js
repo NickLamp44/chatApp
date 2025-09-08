@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect, useState, useCallback } from "react";
 import {
   SafeAreaView,
@@ -147,7 +149,9 @@ const ChatScreen = ({ route, navigation }) => {
         user={user}
         renderBubble={(props) => <MessageBubble {...props} user={user} />}
         renderAvatar={null}
-        renderActions={(props) => <CustomActions {...props} user={user} />}
+        renderActions={(props) => (
+          <CustomActions {...props} user={user} onSend={onSend} />
+        )}
         renderMessage={(props) => (
           <TouchableOpacity
             activeOpacity={0.7}

@@ -8,7 +8,7 @@ import {
 } from "react-native";
 import { useActionSheet } from "@expo/react-native-action-sheet";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { storage } from "../services/firebase"; 
+import { storage } from "../services/firebase";
 
 let ImagePicker, Location;
 if (Platform.OS !== "web") {
@@ -64,7 +64,6 @@ const CustomActions = ({ onSend, user }) => {
     }
   };
 
-  
   const pickImageWeb = () =>
     new Promise((resolve) => {
       const input = document.createElement("input");
@@ -89,6 +88,8 @@ const CustomActions = ({ onSend, user }) => {
     });
 
   const pickImage = async () => {
+    console.log("[v0] pickImage called");
+
     if (Platform.OS === "web") {
       const result = await pickImageWeb();
       if (!result.canceled && result.assets?.[0]) {
@@ -110,14 +111,24 @@ const CustomActions = ({ onSend, user }) => {
     )
       return;
 
+    console.log("[v0] Launching image library picker");
+
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       quality: 1,
       allowsEditing: true,
     });
 
+    console.log("[v0] Image picker result:", result);
+
     if (!result.canceled && result.assets?.[0]) {
+      console.log(
+        "[v0] Image selected, calling uploadAndSendImage with URI:",
+        result.assets[0].uri
+      );
       await uploadAndSendImage(result.assets[0].uri);
+    } else {
+      console.log("[v0] Image selection canceled or no assets");
     }
   };
 
@@ -167,7 +178,8 @@ const CustomActions = ({ onSend, user }) => {
     if (location) {
       onSend([
         {
-          _id: `${Date.now()}-${user._id}`,
+          _id: Math.random().toString(36).substring(7) + Date.now(),
+          text: "📍 Location shared",
           user: { _id: user._id, name: user.name || "User" },
           location: {
             latitude: location.coords.latitude,
@@ -180,23 +192,71 @@ const CustomActions = ({ onSend, user }) => {
   };
 
   const uploadAndSendImage = async (imageURI) => {
+    console.log("[v0] uploadAndSendImage called with URI:", imageURI);
+
     if (!storage) {
+      console.log("[v0] Storage not configured");
       Alert.alert("Error", "Storage not configured.");
       return;
     }
 
     try {
+      console.log("[v0] Starting fetch of image URI");
       const response = await fetch(imageURI);
+
+      if (!response.ok) {
+        throw new Error(
+          `Failed to fetch image: ${response.status} ${response.statusText}`
+        );
+      }
+
       const blob = await response.blob();
+      console.log(
+        "[v0] Image blob created, size:",
+        blob.size,
+        "type:",
+        blob.type
+      );
+
+      if (blob.size === 0) {
+        throw new Error("Image blob is empty");
+      }
+
+      if (blob.size > 25 * 1024 * 1024) {
+        // 25MB limit (Firebase default)
+        throw new Error("Image is too large (max 25MB)");
+      }
 
       const imageName = `${user._id || "unknown"}-${Date.now()}.jpg`;
       const storageRef = ref(storage, `images/${imageName}`);
+      console.log("[v0] Uploading to Firebase with name:", imageName);
+      console.log("[v0] Storage ref path:", storageRef.fullPath);
 
-      await uploadBytes(storageRef, blob);
+      console.log("[v0] Starting Firebase upload...");
+
+      // Create a promise that rejects after 60 seconds
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(
+          () => reject(new Error("Firebase upload timeout after 60 seconds")),
+          60000
+        );
+      });
+
+      // Race between upload and timeout
+      const uploadResult = await Promise.race([
+        uploadBytes(storageRef, blob),
+        timeoutPromise,
+      ]);
+
+      console.log("[v0] Upload successful, result:", uploadResult);
+      console.log("[v0] Getting download URL...");
+
       const downloadURL = await getDownloadURL(storageRef);
+      console.log("[v0] Download URL received:", downloadURL);
 
       const messageObject = {
-        _id: `${Date.now()}-${user._id || "unknown"}`,
+        _id: Math.random().toString(36).substring(7) + Date.now(),
+        text: "📷 Image",
         user: {
           _id: user._id || "unknown",
           name: user.name || "User",
@@ -205,10 +265,46 @@ const CustomActions = ({ onSend, user }) => {
         createdAt: new Date(),
       };
 
+      console.log("[v0] Calling onSend with message object:", messageObject);
       onSend([messageObject]);
+      console.log("[v0] onSend called successfully");
     } catch (error) {
-      console.error("Upload failed:", error);
-      Alert.alert("Image upload failed.", error.message || "Please try again.");
+      console.error("[v0] Upload failed with error:", error);
+      console.error("[v0] Error name:", error.name);
+      console.error("[v0] Error message:", error.message);
+      console.error("[v0] Error stack:", error.stack);
+
+      console.log("[v0] Checking Firebase auth state...");
+      import("../services/firebase").then(({ auth }) => {
+        console.log(
+          "[v0] Current user:",
+          auth.currentUser ? "authenticated" : "not authenticated"
+        );
+        if (auth.currentUser) {
+          console.log("[v0] User ID:", auth.currentUser.uid);
+        }
+      });
+
+      let errorMessage = "Image upload failed. ";
+      if (error.code === "storage/unauthorized") {
+        errorMessage += "Permission denied. Check Firebase storage rules.";
+      } else if (error.code === "storage/canceled") {
+        errorMessage += "Upload was canceled.";
+      } else if (error.code === "storage/unknown") {
+        errorMessage += "Unknown error occurred. Please try again.";
+      } else if (error.message.includes("timeout")) {
+        errorMessage +=
+          "Upload timed out. Check your connection and Firebase configuration.";
+      } else if (
+        error.message.includes("network") ||
+        error.message.includes("fetch")
+      ) {
+        errorMessage += "Network error. Check your connection.";
+      } else {
+        errorMessage += error.message || "Please try again.";
+      }
+
+      Alert.alert("Upload Error", errorMessage);
     }
   };
 
