@@ -44,7 +44,7 @@ const MessageBubble = ({ currentMessage, user }) => {
   const isUser = messageUser?._id === user._id;
 
   // Add comprehensive logging for message rendering
-  console.log("[v0] MessageBubble rendering message:", {
+  console.log("  MessageBubble rendering message:", {
     messageId: currentMessage._id,
     hasImage: !!currentMessage.image,
     hasLocation: !!currentMessage.location,
@@ -103,7 +103,7 @@ const MessageBubble = ({ currentMessage, user }) => {
                 }}
                 style={styles.mapImage}
                 onError={() => {
-                  console.log("[v0] Map image failed to load");
+                  console.log("  Map image failed to load");
                 }}
               />
               <Text style={styles.coordinatesText}>
@@ -137,22 +137,19 @@ const MessageBubble = ({ currentMessage, user }) => {
               source={{ uri: currentMessage.image }}
               style={styles.image}
               onLoad={() =>
-                console.log(
-                  "[v0] Image loaded successfully:",
-                  currentMessage.image
-                )
+                console.log("Image loaded successfully:", currentMessage.image)
               }
               onError={(error) =>
                 console.log(
-                  "[v0] Image load error:",
+                  " Image load error:",
                   error.nativeEvent?.error || error
                 )
               }
               onLoadStart={() =>
-                console.log("[v0] Image load started:", currentMessage.image)
+                console.log(" Image load started:", currentMessage.image)
               }
               onLoadEnd={() =>
-                console.log("[v0] Image load ended:", currentMessage.image)
+                console.log(" Image load ended:", currentMessage.image)
               }
             />
           </View>
