@@ -143,29 +143,31 @@ const ChatScreen = ({ route, navigation }) => {
       </View>
 
       {/* Chat UI */}
-      <GiftedChat
-        messages={messages}
-        onSend={onSend}
-        user={user}
-        renderBubble={(props) => <MessageBubble {...props} user={user} />}
-        renderAvatar={null}
-        renderActions={(props) => (
-          <CustomActions {...props} user={user} onSend={onSend} />
-        )}
-        renderMessage={(props) => (
-          <TouchableOpacity
-            activeOpacity={0.7}
-            onLongPress={() => {
-              setSelectedMessage(props.currentMessage);
-              setShowPicker(true);
-            }}
-          >
-            <MessageBubble {...props} user={user} />
-          </TouchableOpacity>
-        )}
-        keyboardShouldPersistTaps="handled"
-        messagesContainerStyle={styles.messagesContainer}
-      />
+      <View style={styles.chatContainer}>
+        <GiftedChat
+          messages={messages}
+          onSend={onSend}
+          user={user}
+          renderBubble={(props) => <MessageBubble {...props} user={user} />}
+          renderAvatar={null}
+          renderActions={(props) => (
+            <CustomActions {...props} user={user} onSend={onSend} />
+          )}
+          renderMessage={(props) => (
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onLongPress={() => {
+                setSelectedMessage(props.currentMessage);
+                setShowPicker(true);
+              }}
+            >
+              <MessageBubble {...props} user={user} />
+            </TouchableOpacity>
+          )}
+          keyboardShouldPersistTaps="handled"
+          messagesContainerStyle={styles.messagesContainer}
+        />
+      </View>
 
       {/* Reactions */}
       <ReactBubble
@@ -178,13 +180,22 @@ const ChatScreen = ({ route, navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
+  container: {
+    flex: 1,
+    height: "100vh",
+    maxHeight: "100vh",
+  },
+  chatContainer: {
+    flex: 1,
+    minHeight: 0, // Prevents flex child from overflowing
+  },
   header: {
     paddingTop: Platform.OS === "android" ? 40 : 10,
     paddingHorizontal: 16,
     paddingBottom: 12,
     borderBottomWidth: 1,
     borderBottomColor: "#e0e0e0",
+    flexShrink: 0,
   },
   backButton: {
     paddingVertical: 4,

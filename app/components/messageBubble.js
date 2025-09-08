@@ -1,4 +1,7 @@
+"use client";
+
 import { View, Text, Image, StyleSheet } from "react-native";
+import { useState } from "react";
 
 const getAvatarColor = (userId) => {
   const colors = [
@@ -12,8 +15,6 @@ const getAvatarColor = (userId) => {
     "#F7DC6F",
     "#BB8FCE",
     "#85C1E9",
-    "#F8C471",
-    "#82E0AA",
     "#F1948A",
     "#85C1E9",
     "#D7BDE2",
@@ -46,7 +47,9 @@ const MessageBubble = ({ currentMessage, user }) => {
   console.log("[v0] MessageBubble rendering message:", {
     messageId: currentMessage._id,
     hasImage: !!currentMessage.image,
+    hasLocation: !!currentMessage.location,
     imageUrl: currentMessage.image,
+    location: currentMessage.location,
     messageUser: messageUser,
     currentUser: user,
     isUser: isUser,
@@ -57,6 +60,8 @@ const MessageBubble = ({ currentMessage, user }) => {
     ? getAvatarColor(messageUser._id)
     : "#CCCCCC";
   const initials = getUserInitials(messageUser?.name);
+
+  const [useGoogleMaps, setUseGoogleMaps] = useState(true);
 
   return (
     <View
@@ -82,9 +87,49 @@ const MessageBubble = ({ currentMessage, user }) => {
           <Text style={styles.replyText}>↪️ Replying to message...</Text>
         )}
 
-        {!!currentMessage.text && !currentMessage.image && (
-          <Text style={styles.text}>{currentMessage.text}</Text>
+        {!!currentMessage.location && (
+          <View style={styles.locationContainer}>
+            <Text style={styles.text}>📍 Location shared</Text>
+            <View style={styles.mapContainer}>
+              <Image
+                source={{
+                  uri: `https://tile.openstreetmap.org/cgi-bin/export?bbox=${
+                    currentMessage.location.longitude - 0.01
+                  },${currentMessage.location.latitude - 0.01},${
+                    currentMessage.location.longitude + 0.01
+                  },${
+                    currentMessage.location.latitude + 0.01
+                  }&scale=8000&format=png`,
+                }}
+                style={styles.mapImage}
+                onError={() => {
+                  console.log("[v0] Map image failed to load");
+                }}
+              />
+              <Text style={styles.coordinatesText}>
+                📍 {currentMessage.location.latitude.toFixed(6)},{" "}
+                {currentMessage.location.longitude.toFixed(6)}
+              </Text>
+              <Text
+                style={styles.mapLink}
+                onPress={() => {
+                  const url = `https://www.google.com/maps?q=${currentMessage.location.latitude},${currentMessage.location.longitude}`;
+                  if (typeof window !== "undefined") {
+                    window.open(url, "_blank");
+                  }
+                }}
+              >
+                🗺️ View on Google Maps
+              </Text>
+            </View>
+          </View>
         )}
+
+        {!!currentMessage.text &&
+          !currentMessage.image &&
+          !currentMessage.location && (
+            <Text style={styles.text}>{currentMessage.text}</Text>
+          )}
 
         {!!currentMessage.image && (
           <View>
@@ -189,6 +234,32 @@ const styles = StyleSheet.create({
   reaction: {
     fontSize: 14,
     marginRight: 4,
+  },
+
+  locationContainer: {
+    marginVertical: 5,
+  },
+  mapContainer: {
+    backgroundColor: "#f0f0f0",
+    padding: 10,
+    borderRadius: 8,
+    marginTop: 5,
+  },
+  mapImage: {
+    width: 280,
+    height: 160,
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+  coordinatesText: {
+    fontSize: 14,
+    color: "#666",
+    marginBottom: 5,
+  },
+  mapLink: {
+    fontSize: 14,
+    color: "#007AFF",
+    textDecorationLine: "underline",
   },
 });
 

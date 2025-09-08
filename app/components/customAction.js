@@ -158,26 +158,94 @@ const CustomActions = ({ onSend, user }) => {
   };
 
   const getLocation = async () => {
+    console.log("[v0] getLocation called");
+
+    if (Platform.OS === "web") {
+      console.log("[v0] Using web geolocation API");
+
+      if (!navigator.geolocation) {
+        console.log("[v0] Geolocation not supported by browser");
+        Alert.alert("Error", "Geolocation is not supported by this browser.");
+        return;
+      }
+
+      try {
+        console.log("[v0] Requesting location from browser...");
+        const position = await new Promise((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject, {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 60000,
+          });
+        });
+
+        console.log("[v0] Web location received:", position);
+
+        const locationMessage = {
+          _id: Math.random().toString(36).substring(7) + Date.now(),
+          text: "📍 Location shared",
+          user: { _id: user._id, name: user.name || "User" },
+          location: {
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+          },
+          createdAt: new Date(),
+        };
+
+        console.log(
+          "[v0] Calling onSend with web location message:",
+          locationMessage
+        );
+        onSend([locationMessage]);
+        console.log("[v0] Web location message sent successfully");
+        return;
+      } catch (error) {
+        console.error("[v0] Web geolocation error:", error);
+        let errorMessage = "Failed to get location: ";
+        if (error.code === 1) {
+          errorMessage += "Permission denied";
+        } else if (error.code === 2) {
+          errorMessage += "Position unavailable";
+        } else if (error.code === 3) {
+          errorMessage += "Timeout";
+        } else {
+          errorMessage += error.message;
+        }
+        Alert.alert("Location Error", errorMessage);
+        return;
+      }
+    }
+
     if (!Location) {
+      console.log("[v0] Location module not available");
       Alert.alert("Error", "Location not available.");
       return;
     }
 
+    console.log("[v0] Requesting location permissions...");
     if (
       !(await requestPermission(
         Location.requestForegroundPermissionsAsync,
         "Location access is needed."
       ))
-    )
+    ) {
+      console.log("[v0] Location permission denied");
       return;
+    }
 
-    const location = await Location.getCurrentPositionAsync({
-      accuracy: Location.Accuracy.High,
-    });
+    console.log(
+      "[v0] Location permission granted, getting current position..."
+    );
 
-    if (location) {
-      onSend([
-        {
+    try {
+      const location = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.High,
+      });
+
+      console.log("[v0] Location received:", location);
+
+      if (location) {
+        const locationMessage = {
           _id: Math.random().toString(36).substring(7) + Date.now(),
           text: "📍 Location shared",
           user: { _id: user._id, name: user.name || "User" },
@@ -186,8 +254,20 @@ const CustomActions = ({ onSend, user }) => {
             longitude: location.coords.longitude,
           },
           createdAt: new Date(),
-        },
-      ]);
+        };
+
+        console.log(
+          "[v0] Calling onSend with location message:",
+          locationMessage
+        );
+        onSend([locationMessage]);
+        console.log("[v0] Location message sent successfully");
+      } else {
+        console.log("[v0] No location data received");
+      }
+    } catch (error) {
+      console.error("[v0] Location error:", error);
+      Alert.alert("Location Error", `Failed to get location: ${error.message}`);
     }
   };
 
