@@ -26,7 +26,7 @@ const CustomActions = ({ onSend, user }) => {
   const onActionPress = () => {
     const options = [
       "Choose From Library",
-      "Take Picture",
+      // "Take Picture",
       "Send Location",
       "Cancel",
     ];

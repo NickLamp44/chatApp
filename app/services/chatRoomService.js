@@ -130,3 +130,22 @@ export const joinChatRoom = async (
     throw error;
   }
 };
+
+/**
+ * Get chat room details by ID
+ */
+export const getChatRoomDetails = async (chatRoom_ID) => {
+  try {
+    const roomRef = doc(db, "ChatRooms", chatRoom_ID);
+    const roomSnap = await getDoc(roomRef);
+
+    if (!roomSnap.exists()) {
+      throw new Error("Chat room not found");
+    }
+
+    return { id: roomSnap.id, ...roomSnap.data() };
+  } catch (error) {
+    console.error("❌ Error fetching chat room details:", error);
+    throw error;
+  }
+};

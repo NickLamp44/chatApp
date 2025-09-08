@@ -7,10 +7,18 @@ import CreateRoomScreen from "../screens/createRoomScreen";
 
 const Stack = createStackNavigator();
 
-export default function AppNavigator({ isConnected }) {
+export default function AppNavigator({ isConnected, user }) {
+  const initialRoute = user ? "HomeScreen" : "Login";
+  console.log(
+    " AppNavigator rendering with initialRoute:",
+    initialRoute,
+    "user:",
+    user ? "present" : "null"
+  );
+
   return (
     <Stack.Navigator
-      initialRouteName="Login"
+      initialRouteName={initialRoute}
       screenOptions={{ headerShown: false }}
     >
       <Stack.Screen name="Login" component={Login} />
@@ -20,7 +28,7 @@ export default function AppNavigator({ isConnected }) {
       <Stack.Screen
         name="Chat"
         component={ChatScreen}
-        initialParams={{ isConnected }} 
+        initialParams={{ isConnected }}
       />
     </Stack.Navigator>
   );

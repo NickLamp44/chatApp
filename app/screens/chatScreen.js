@@ -18,7 +18,7 @@ import {
   sendMessage,
   toggleReaction,
 } from "../services/messageService";
-import { joinChatRoom } from "../services/chatRoomService";
+import { joinChatRoom, getChatRoomDetails } from "../services/chatRoomService";
 import { getStoredMessages } from "../services/storageService";
 
 import MessageBubble from "../components/messageBubble";
@@ -31,10 +31,10 @@ const ChatScreen = ({ route, navigation }) => {
   const [showPicker, setShowPicker] = useState(false);
   const [user, setUser] = useState(null);
   const [chatRoomID, setChatRoomID] = useState(route.params?.chatRoom_ID);
+  const [chatRoomTitle, setChatRoomTitle] = useState(
+    route.params?.chatRoom_ID || "Chat Room"
+  );
 
-  /**
-   * Rehydrate user from AsyncStorage
-   */
   useEffect(() => {
     const loadUser = async () => {
       try {
@@ -67,13 +67,21 @@ const ChatScreen = ({ route, navigation }) => {
     loadUser();
   }, [route.params]);
 
-  /**
-   * Load cached messages first, then subscribe to Firestore
-   */
   useEffect(() => {
     if (!chatRoomID || !user) return;
 
-    // Step 1: hydrate cached messages instantly
+    const fetchChatRoomDetails = async () => {
+      try {
+        const roomDetails = await getChatRoomDetails(chatRoomID);
+        setChatRoomTitle(roomDetails.chatRoomName || chatRoomID);
+      } catch (error) {
+        console.error("❌ Failed to fetch chat room details:", error);
+        setChatRoomTitle(chatRoomID); // Fallback to ID if fetch fails
+      }
+    };
+
+    fetchChatRoomDetails();
+
     const hydrateFromCache = async () => {
       const cached = await getStoredMessages();
       if (cached.length > 0) {
@@ -83,10 +91,8 @@ const ChatScreen = ({ route, navigation }) => {
 
     hydrateFromCache();
 
-    // Step 2: live listener
     const unsubscribe = listenToMessages(chatRoomID, setMessages);
 
-    // Step 3: ensure user is joined to room
     if (!user.isGuest) {
       joinChatRoom(user._id, chatRoomID).catch((err) =>
         console.error("❌ Failed to join chat room", err)
@@ -96,9 +102,6 @@ const ChatScreen = ({ route, navigation }) => {
     return unsubscribe;
   }, [chatRoomID, user]);
 
-  /**
-   * Send new messages
-   */
   const onSend = useCallback(
     async (newMessages = []) => {
       setMessages((prev) => GiftedChat.append(prev, newMessages));
@@ -113,9 +116,6 @@ const ChatScreen = ({ route, navigation }) => {
     [chatRoomID, user]
   );
 
-  /**
-   * Add emoji reactions
-   */
   const handleAddReaction = async (emoji) => {
     if (!selectedMessage) return;
     try {
@@ -133,13 +133,17 @@ const ChatScreen = ({ route, navigation }) => {
     <SafeAreaView style={[styles.container, { backgroundColor: "#fff" }]}>
       {/* Header */}
       <View style={[styles.header, { backgroundColor: "#fff" }]}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.replace("HomeScreen")}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.backText}>← Back</Text>
-        </TouchableOpacity>
+        <View style={styles.headerContent}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.replace("HomeScreen")}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.backText}>← Back</Text>
+          </TouchableOpacity>
+          <Text style={styles.chatTitle}>{chatRoomTitle}</Text>
+          <View style={styles.headerSpacer} />
+        </View>
       </View>
 
       {/* Chat UI */}
@@ -197,14 +201,33 @@ const styles = StyleSheet.create({
     borderBottomColor: "#e0e0e0",
     flexShrink: 0,
   },
+  headerContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    minHeight: 40,
+  },
   backButton: {
     paddingVertical: 4,
     paddingHorizontal: 8,
+    width: 80,
   },
   backText: {
-    fontSize: 24,
+    fontSize: 16,
     color: "#007AFF",
     fontWeight: "500",
+  },
+  chatTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#333",
+    textAlign: "center",
+    width: "auto",
+    minWidth: 100,
+    maxWidth: 200,
+  },
+  headerSpacer: {
+    width: 80,
   },
   messagesContainer: {
     padding: 16,
