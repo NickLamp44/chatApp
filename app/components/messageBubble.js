@@ -1,9 +1,67 @@
-import React from "react";
+"use client";
+
 import { View, Text, Image, StyleSheet } from "react-native";
+import { useState } from "react";
+
+const getAvatarColor = (userId) => {
+  const colors = [
+    "#FF6B6B",
+    "#4ECDC4",
+    "#45B7D1",
+    "#96CEB4",
+    "#FFEAA7",
+    "#DDA0DD",
+    "#98D8C8",
+    "#F7DC6F",
+    "#BB8FCE",
+    "#85C1E9",
+    "#F1948A",
+    "#85C1E9",
+    "#D7BDE2",
+  ];
+
+  let hash = 0;
+  for (let i = 0; i < userId.length; i++) {
+    hash = userId.charCodeAt(i) + ((hash << 5) - hash);
+  }
+
+  return colors[Math.abs(hash) % colors.length];
+};
+
+const getUserInitials = (name) => {
+  if (!name) return "?";
+
+  const names = name.trim().split(" ");
+  if (names.length === 1) {
+    return names[0].charAt(0).toUpperCase();
+  }
+
+  return (names[0].charAt(0) + names[names.length - 1].charAt(0)).toUpperCase();
+};
 
 const MessageBubble = ({ currentMessage, user }) => {
   const messageUser = currentMessage.user;
   const isUser = messageUser?._id === user._id;
+
+  // Add comprehensive logging for message rendering
+  console.log("  MessageBubble rendering message:", {
+    messageId: currentMessage._id,
+    hasImage: !!currentMessage.image,
+    hasLocation: !!currentMessage.location,
+    imageUrl: currentMessage.image,
+    location: currentMessage.location,
+    messageUser: messageUser,
+    currentUser: user,
+    isUser: isUser,
+  });
+
+  // Generate avatar props
+  const avatarColor = messageUser?._id
+    ? getAvatarColor(messageUser._id)
+    : "#CCCCCC";
+  const initials = getUserInitials(messageUser?.name);
+
+  const [useGoogleMaps, setUseGoogleMaps] = useState(true);
 
   return (
     <View
@@ -12,8 +70,10 @@ const MessageBubble = ({ currentMessage, user }) => {
         isUser ? styles.rightContainer : styles.leftContainer,
       ]}
     >
-      {!isUser && messageUser?.avatar && (
-        <Image source={{ uri: messageUser.avatar }} style={styles.avatar} />
+      {!isUser && (
+        <View style={[styles.avatar, { backgroundColor: avatarColor }]}>
+          <Text style={styles.avatarText}>{initials}</Text>
+        </View>
       )}
 
       <View
@@ -27,12 +87,72 @@ const MessageBubble = ({ currentMessage, user }) => {
           <Text style={styles.replyText}>↪️ Replying to message...</Text>
         )}
 
-        {!!currentMessage.text && (
-          <Text style={styles.text}>{currentMessage.text}</Text>
+        {!!currentMessage.location && (
+          <View style={styles.locationContainer}>
+            <Text style={styles.text}>📍 Location shared</Text>
+            <View style={styles.mapContainer}>
+              <Image
+                source={{
+                  uri: `https://tile.openstreetmap.org/cgi-bin/export?bbox=${
+                    currentMessage.location.longitude - 0.01
+                  },${currentMessage.location.latitude - 0.01},${
+                    currentMessage.location.longitude + 0.01
+                  },${
+                    currentMessage.location.latitude + 0.01
+                  }&scale=8000&format=png`,
+                }}
+                style={styles.mapImage}
+                onError={() => {
+                  console.log("  Map image failed to load");
+                }}
+              />
+              <Text style={styles.coordinatesText}>
+                📍 {currentMessage.location.latitude.toFixed(6)},{" "}
+                {currentMessage.location.longitude.toFixed(6)}
+              </Text>
+              <Text
+                style={styles.mapLink}
+                onPress={() => {
+                  const url = `https://www.google.com/maps?q=${currentMessage.location.latitude},${currentMessage.location.longitude}`;
+                  if (typeof window !== "undefined") {
+                    window.open(url, "_blank");
+                  }
+                }}
+              >
+                🗺️ View on Google Maps
+              </Text>
+            </View>
+          </View>
         )}
 
+        {!!currentMessage.text &&
+          !currentMessage.image &&
+          !currentMessage.location && (
+            <Text style={styles.text}>{currentMessage.text}</Text>
+          )}
+
         {!!currentMessage.image && (
-          <Image source={{ uri: currentMessage.image }} style={styles.image} />
+          <View>
+            <Image
+              source={{ uri: currentMessage.image }}
+              style={styles.image}
+              onLoad={() =>
+                console.log("Image loaded successfully:", currentMessage.image)
+              }
+              onError={(error) =>
+                console.log(
+                  " Image load error:",
+                  error.nativeEvent?.error || error
+                )
+              }
+              onLoadStart={() =>
+                console.log(" Image load started:", currentMessage.image)
+              }
+              onLoadEnd={() =>
+                console.log(" Image load ended:", currentMessage.image)
+              }
+            />
+          </View>
         )}
 
         {Array.isArray(currentMessage.likedBy) &&
@@ -59,10 +179,25 @@ const styles = StyleSheet.create({
   leftContainer: { alignSelf: "flex-start" },
   rightContainer: { alignSelf: "flex-end", flexDirection: "row-reverse" },
 
-  avatar: { width: 30, height: 30, borderRadius: 15, marginRight: 8 },
+  avatar: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    marginRight: 8,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  avatarText: {
+    color: "white",
+    fontSize: 12,
+    fontWeight: "bold",
+    textAlign: "center",
+  },
 
   bubble: {
     padding: 10,
+    margin: 10,
     borderRadius: 15,
   },
   leftBubble: { backgroundColor: "#e1ffc7" },
@@ -96,6 +231,32 @@ const styles = StyleSheet.create({
   reaction: {
     fontSize: 14,
     marginRight: 4,
+  },
+
+  locationContainer: {
+    marginVertical: 5,
+  },
+  mapContainer: {
+    backgroundColor: "#f0f0f0",
+    padding: 10,
+    borderRadius: 8,
+    marginTop: 5,
+  },
+  mapImage: {
+    width: 280,
+    height: 160,
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+  coordinatesText: {
+    fontSize: 14,
+    color: "#666",
+    marginBottom: 5,
+  },
+  mapLink: {
+    fontSize: 14,
+    color: "#007AFF",
+    textDecorationLine: "underline",
   },
 });
 

@@ -11,8 +11,10 @@ import {
 } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth } from "../services/firebase";
+
 import RoomSelection from "../components/roomSelector";
-import { seedInitialRooms } from "../utils/seedInitalRooms";
 import NavMenu from "../components/navMenu";
 
 const HomeScreen = () => {
@@ -27,6 +29,7 @@ const HomeScreen = () => {
   const [backgroundColor, setBackgroundColor] = useState("#090C08");
   const [selectedRoomID, setSelectedRoomID] = useState(null);
 
+  // Load user from params or AsyncStorage
   useEffect(() => {
     const loadUser = async () => {
       if (route.params) {
@@ -42,8 +45,10 @@ const HomeScreen = () => {
           const parsed = JSON.parse(user);
           setUserID(parsed.userID);
           setName(parsed.name);
+          setEmail(parsed.email || "");
+          setProfilePic(parsed.profilePic || "");
           setBackgroundColor(parsed.backgroundColor || "#090C08");
-          setIsGuest(false);
+          setIsGuest(parsed.isGuest || false);
         }
       }
     };
@@ -51,12 +56,35 @@ const HomeScreen = () => {
     loadUser();
   }, [route.params]);
 
+  // Firebase listener (only if not guest)
+  useEffect(() => {
+    if (isGuest) return;
+
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        const userData = {
+          userID: user.uid,
+          name: user.displayName || "User",
+          email: user.email,
+          profilePic: user.photoURL,
+          backgroundColor: "#090C08",
+          isGuest: false,
+        };
+        await AsyncStorage.setItem("user", JSON.stringify(userData));
+        setUserID(user.uid);
+        setName(user.displayName || "User");
+        setEmail(user.email);
+        setProfilePic(user.photoURL);
+        setIsGuest(false);
+      }
+    });
+    return unsubscribe;
+  }, [isGuest]);
+
   const handleRoomSelect = (roomID) => {
     console.log("🟡 onRoomSelect triggered with:", roomID);
     setSelectedRoomID(roomID);
   };
-
-  const colors = ["#090C08", "#474056", "#8A95A5", "#B9C6AE"];
 
   const proceedToChat = async () => {
     if (!selectedRoomID) {
@@ -69,33 +97,25 @@ const HomeScreen = () => {
       return;
     }
 
-    await AsyncStorage.setItem(
-      "user",
-      JSON.stringify({ userID, name, backgroundColor })
-    );
-
-    navigation.replace("Chat", {
+    const userData = {
       userID,
       name,
-      backgroundColor,
-      isGuest,
-      chatRoom_ID: selectedRoomID,
       email,
       profilePic,
-    });
+      backgroundColor,
+      isGuest,
+    };
 
-    console.log("➡️ Proceeding to Chat with:", {
-      selectedRoomID,
-      userID,
-      name,
+    await AsyncStorage.setItem("user", JSON.stringify(userData));
+
+    // ✅ Pass only serializable user data
+    navigation.replace("Chat", {
+      chatRoom_ID: selectedRoomID,
+      user: userData,
     });
   };
 
-  const handleKeyPress = (e) => {
-    if (Platform.OS === "web" && e.nativeEvent.key === "Enter") {
-      proceedToChat();
-    }
-  };
+  const colors = ["#090C08", "#474056", "#8A95A5", "#B9C6AE"];
 
   return (
     <KeyboardAvoidingView
@@ -120,13 +140,11 @@ const HomeScreen = () => {
               onChangeText={setName}
               placeholder="Enter Your Name"
               placeholderTextColor="#757083"
-              onKeyPress={handleKeyPress}
-              multiline={true}
+              multiline
             />
           )}
 
           <Text style={styles.colorText}>Choose Background Color:</Text>
-
           <View style={styles.colorContainer}>
             {colors.map((color) => (
               <TouchableOpacity

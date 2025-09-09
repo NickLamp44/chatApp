@@ -13,11 +13,8 @@ import {
   orderBy,
   onSnapshot,
 } from "firebase/firestore";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { db } from "./firebase";
-
-const MESSAGES_COLLECTION = "Messages";
-const USERS_COLLECTION = "Users";
+import { storeMessages } from "./storageService";
 
 // Send a new message
 export const sendMessage = async (message, user, chatRoom_ID) => {
@@ -45,6 +42,7 @@ export const sendMessage = async (message, user, chatRoom_ID) => {
     messageData
   );
 
+  // Track user messages
   const userRef = doc(db, "Users", user._id);
   const userSnap = await getDoc(userRef);
 
@@ -60,7 +58,7 @@ export const sendMessage = async (message, user, chatRoom_ID) => {
         messageID: messageRef.id,
         text: message.text || "",
         sentAt: new Date(),
-        chatRoom_ID: chatRoom_ID,
+        chatRoom_ID,
         hasImage: !!message.image,
         hasLocation: !!message.location,
       }),
@@ -71,7 +69,12 @@ export const sendMessage = async (message, user, chatRoom_ID) => {
 };
 
 // Reply to a message
-export const replyToMessage = async (messageID, replyText, user) => {
+export const replyToMessage = async (
+  chatRoom_ID,
+  messageID,
+  replyText,
+  user
+) => {
   const reply = {
     text: replyText,
     sentAt: new Date(),
@@ -80,7 +83,7 @@ export const replyToMessage = async (messageID, replyText, user) => {
 
   const repliesRef = collection(
     db,
-    `${MESSAGES_COLLECTION}/${messageID}/Replies`
+    `ChatRooms/${chatRoom_ID}/Messages/${messageID}/Replies`
   );
 
   const replyDoc = await addDoc(repliesRef, reply);
@@ -88,8 +91,8 @@ export const replyToMessage = async (messageID, replyText, user) => {
 };
 
 // Toggle Reaction on a message (like/unlike)
-export const toggleReaction = async (messageID, userID, emoji) => {
-  const msgRef = doc(db, MESSAGES_COLLECTION, messageID);
+export const toggleReaction = async (chatRoom_ID, messageID, userID, emoji) => {
+  const msgRef = doc(db, `ChatRooms/${chatRoom_ID}/Messages`, messageID);
   const msgSnap = await getDoc(msgRef);
 
   if (!msgSnap.exists()) return;
@@ -135,7 +138,10 @@ export const listenToMessages = (chatRoom_ID, onMessagesUpdate) => {
       })
     );
 
-    await AsyncStorage.setItem("cachedMessages", JSON.stringify(messages));
+    // Cache locally via storageService
+    await storeMessages(messages);
+
+    // Update UI
     onMessagesUpdate(messages);
   });
 };

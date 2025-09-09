@@ -6,6 +6,7 @@ import {
   GoogleAuthProvider,
   signInWithPopup,
   FacebookAuthProvider,
+  onAuthStateChanged,
 } from "firebase/auth";
 import {
   collection,
@@ -18,10 +19,39 @@ import {
 } from "firebase/firestore";
 import { auth, db } from "./firebase"; // Import Firebase instances
 
-// Helper function to check if a user exists in Firestore
-const getUserByUID = async (uid) => {
-  const userDoc = await getDoc(doc(db, "Users", uid));
-  return userDoc.exists() ? userDoc.data() : null;
+export const onAuthStateChange = (callback) => {
+  return onAuthStateChanged(auth, async (user) => {
+    if (user) {
+      try {
+        const userDocRef = doc(db, "Users", user.uid);
+        const userDoc = await getDoc(userDocRef);
+
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          callback({
+            userID: user.uid,
+            name: userData.userName || user.displayName,
+            email: user.email,
+            profilePic: userData.profilePic || user.photoURL || "",
+            isGuest: false,
+          });
+        } else {
+          callback({
+            userID: user.uid,
+            name: user.displayName || user.email?.split("@")[0],
+            email: user.email,
+            profilePic: user.photoURL || "",
+            isGuest: false,
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+        callback(null);
+      }
+    } else {
+      callback(null);
+    }
+  });
 };
 
 // Helper function to check if a username is already taken

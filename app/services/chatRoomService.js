@@ -1,22 +1,21 @@
 import {
   collection,
-  addDoc,
   doc,
   updateDoc,
   getDoc,
-  arrayUnion,
   query,
   orderBy,
   getDocs,
   setDoc,
   serverTimestamp,
+  arrayUnion,
 } from "firebase/firestore";
 import { db } from "./firebase";
-import * as Crypto from "expo-crypto";
+import { hashPassword } from "../utils/hashPassword";
 
-const hashPassword = async (password) =>
-  await Crypto.digestStringAsync(Crypto.CryptoDigestAlgorithm.SHA256, password);
-
+/**
+ * Create a new chat room
+ */
 export const createChatRoom = async (
   chatRoomID,
   chatRoomName,
@@ -50,6 +49,9 @@ export const createChatRoom = async (
   }
 };
 
+/**
+ * Fetch all chat rooms
+ */
 export const getAllChatRooms = async () => {
   try {
     const q = query(collection(db, "ChatRooms"), orderBy("createdAt", "desc"));
@@ -61,6 +63,9 @@ export const getAllChatRooms = async () => {
   }
 };
 
+/**
+ * Get rooms that a user has joined
+ */
 export const getUserChatRooms = async (user_ID) => {
   try {
     const userSnap = await getDoc(doc(db, "Users", user_ID));
@@ -72,6 +77,9 @@ export const getUserChatRooms = async (user_ID) => {
   }
 };
 
+/**
+ * Join a chat room (handles guests & password-protected rooms)
+ */
 export const joinChatRoom = async (
   user_ID,
   chatRoom_ID,
@@ -85,106 +93,59 @@ export const joinChatRoom = async (
     const userRef = doc(db, "Users", user_ID);
     const chatRoomRef = doc(db, "ChatRooms", chatRoom_ID);
 
+    // Ensure user exists
+    const userSnap = await getDoc(userRef);
+    if (!userSnap.exists()) {
+      await setDoc(userRef, {
+        userID: user_ID,
+        chatRoomsJoined: [],
+        createdAt: serverTimestamp(),
+        isGuest: true,
+      });
+    }
+
+    // Validate room
     const roomSnap = await getDoc(chatRoomRef);
     if (!roomSnap.exists()) throw new Error("Room does not exist.");
 
     const roomData = roomSnap.data();
     const { isPrivate, roomPassword, members = [] } = roomData;
 
+    // Check password if private
     if (isPrivate) {
       if (!inputPassword) throw new Error("Password is required.");
       const hashedInput = await hashPassword(inputPassword);
       if (hashedInput !== roomPassword) throw new Error("Incorrect password.");
     }
 
+    // Add user to members
     if (!members.includes(user_ID)) {
       await updateDoc(chatRoomRef, { members: arrayUnion(user_ID) });
     }
 
+    // Track joined rooms in user doc
     await updateDoc(userRef, { chatRoomsJoined: arrayUnion(chatRoom_ID) });
   } catch (error) {
     console.error("❌ Error joining chat room:", error);
     throw error;
   }
 };
-export const getMessages = async (chatRoom_ID) => {
+
+/**
+ * Get chat room details by ID
+ */
+export const getChatRoomDetails = async (chatRoom_ID) => {
   try {
-    const q = query(
-      collection(db, `ChatRooms/${chatRoom_ID}/Messages`),
-      orderBy("createdAt", "desc")
-    );
+    const roomRef = doc(db, "ChatRooms", chatRoom_ID);
+    const roomSnap = await getDoc(roomRef);
 
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map((doc) => ({
-      _id: doc.id,
-      ...doc.data(),
-    }));
+    if (!roomSnap.exists()) {
+      throw new Error("Chat room not found");
+    }
+
+    return { id: roomSnap.id, ...roomSnap.data() };
   } catch (error) {
-    console.error("❌ Error getting messages:", error);
-    throw error;
-  }
-};
-
-export const sendMessage = async (chatRoom_ID, sender, text) => {
-  try {
-    if (!sender || !sender._id)
-      throw new Error("Sender information is missing");
-
-    const message = {
-      text,
-      createdAt: serverTimestamp(),
-      user: sender,
-      likedBy: [],
-    };
-
-    const roomRef = collection(db, `ChatRooms/${chatRoom_ID}/Messages`);
-    const docRef = await addDoc(roomRef, message);
-
-    return docRef.id;
-  } catch (error) {
-    console.error("❌ Error sending message:", error);
-    throw error;
-  }
-};
-
-export const likeMessage = async (chatRoom_ID, message_ID, user_ID) => {
-  try {
-    const msgRef = doc(db, `ChatRooms/${chatRoom_ID}/Messages`, message_ID);
-    await updateDoc(msgRef, {
-      likedBy: arrayUnion(user_ID),
-    });
-  } catch (error) {
-    console.error("❌ Error liking message:", error);
-    throw error;
-  }
-};
-
-export const replyToMessage = async (
-  chatRoom_ID,
-  message_ID,
-  sender,
-  replyText
-) => {
-  try {
-    if (!sender || !sender._id)
-      throw new Error("Sender information is missing");
-
-    const reply = {
-      text: replyText,
-      createdAt: serverTimestamp(),
-      user: sender,
-      replyTo: message_ID,
-    };
-
-    const repliesRef = collection(
-      db,
-      `ChatRooms/${chatRoom_ID}/Messages/${message_ID}/Replies`
-    );
-    const docRef = await addDoc(repliesRef, reply);
-
-    return docRef.id;
-  } catch (error) {
-    console.error("❌ Error replying to message:", error);
+    console.error("❌ Error fetching chat room details:", error);
     throw error;
   }
 };
