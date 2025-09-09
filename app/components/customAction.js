@@ -88,7 +88,7 @@ const CustomActions = ({ onSend, user }) => {
     });
 
   const pickImage = async () => {
-    console.log("  pickImage called");
+    console.log("[v0] pickImage called");
 
     if (Platform.OS === "web") {
       const result = await pickImageWeb();
@@ -111,7 +111,7 @@ const CustomActions = ({ onSend, user }) => {
     )
       return;
 
-    console.log("  Launching image library picker");
+    console.log("[v0] Launching image library picker");
 
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -119,16 +119,16 @@ const CustomActions = ({ onSend, user }) => {
       allowsEditing: true,
     });
 
-    console.log("  Image picker result:", result);
+    console.log("[v0] Image picker result:", result);
 
     if (!result.canceled && result.assets?.[0]) {
       console.log(
-        "  Image selected, calling uploadAndSendImage with URI:",
+        "[v0] Image selected, calling uploadAndSendImage with URI:",
         result.assets[0].uri
       );
       await uploadAndSendImage(result.assets[0].uri);
     } else {
-      console.log("  Image selection canceled or no assets");
+      console.log("[v0] Image selection canceled or no assets");
     }
   };
 
@@ -158,19 +158,19 @@ const CustomActions = ({ onSend, user }) => {
   };
 
   const getLocation = async () => {
-    console.log("  getLocation called");
+    console.log("[v0] getLocation called");
 
     if (Platform.OS === "web") {
-      console.log("  Using web geolocation API");
+      console.log("[v0] Using web geolocation API");
 
       if (!navigator.geolocation) {
-        console.log("  Geolocation not supported by browser");
+        console.log("[v0] Geolocation not supported by browser");
         Alert.alert("Error", "Geolocation is not supported by this browser.");
         return;
       }
 
       try {
-        console.log("  Requesting location from browser...");
+        console.log("[v0] Requesting location from browser...");
         const position = await new Promise((resolve, reject) => {
           navigator.geolocation.getCurrentPosition(resolve, reject, {
             enableHighAccuracy: true,
@@ -179,7 +179,7 @@ const CustomActions = ({ onSend, user }) => {
           });
         });
 
-        console.log("  Web location received:", position);
+        console.log("[v0] Web location received:", position);
 
         const locationMessage = {
           _id: Math.random().toString(36).substring(7) + Date.now(),
@@ -193,14 +193,14 @@ const CustomActions = ({ onSend, user }) => {
         };
 
         console.log(
-          "  Calling onSend with web location message:",
+          "[v0] Calling onSend with web location message:",
           locationMessage
         );
         onSend([locationMessage]);
-        console.log("  Web location message sent successfully");
+        console.log("[v0] Web location message sent successfully");
         return;
       } catch (error) {
-        console.error("  Web geolocation error:", error);
+        console.error("[v0] Web geolocation error:", error);
         let errorMessage = "Failed to get location: ";
         if (error.code === 1) {
           errorMessage += "Permission denied";
@@ -217,30 +217,32 @@ const CustomActions = ({ onSend, user }) => {
     }
 
     if (!Location) {
-      console.log("  Location module not available");
+      console.log("[v0] Location module not available");
       Alert.alert("Error", "Location not available.");
       return;
     }
 
-    console.log("  Requesting location permissions...");
+    console.log("[v0] Requesting location permissions...");
     if (
       !(await requestPermission(
         Location.requestForegroundPermissionsAsync,
         "Location access is needed."
       ))
     ) {
-      console.log("  Location permission denied");
+      console.log("[v0] Location permission denied");
       return;
     }
 
-    console.log("  Location permission granted, getting current position...");
+    console.log(
+      "[v0] Location permission granted, getting current position..."
+    );
 
     try {
       const location = await Location.getCurrentPositionAsync({
         accuracy: Location.Accuracy.High,
       });
 
-      console.log("  Location received:", location);
+      console.log("[v0] Location received:", location);
 
       if (location) {
         const locationMessage = {
@@ -254,29 +256,32 @@ const CustomActions = ({ onSend, user }) => {
           createdAt: new Date(),
         };
 
-        console.log("  Calling onSend with location message:", locationMessage);
+        console.log(
+          "[v0] Calling onSend with location message:",
+          locationMessage
+        );
         onSend([locationMessage]);
-        console.log("  Location message sent successfully");
+        console.log("[v0] Location message sent successfully");
       } else {
-        console.log("  No location data received");
+        console.log("[v0] No location data received");
       }
     } catch (error) {
-      console.error("  Location error:", error);
+      console.error("[v0] Location error:", error);
       Alert.alert("Location Error", `Failed to get location: ${error.message}`);
     }
   };
 
   const uploadAndSendImage = async (imageURI) => {
-    console.log("  uploadAndSendImage called with URI:", imageURI);
+    console.log("[v0] uploadAndSendImage called with URI:", imageURI);
 
     if (!storage) {
-      console.log("  Storage not configured");
+      console.log("[v0] Storage not configured");
       Alert.alert("Error", "Storage not configured.");
       return;
     }
 
     try {
-      console.log("  Starting fetch of image URI");
+      console.log("[v0] Starting fetch of image URI");
       const response = await fetch(imageURI);
 
       if (!response.ok) {
@@ -286,7 +291,12 @@ const CustomActions = ({ onSend, user }) => {
       }
 
       const blob = await response.blob();
-      console.log("  Image blob created, size:", blob.size, "type:", blob.type);
+      console.log(
+        "[v0] Image blob created, size:",
+        blob.size,
+        "type:",
+        blob.type
+      );
 
       if (blob.size === 0) {
         throw new Error("Image blob is empty");
@@ -299,10 +309,10 @@ const CustomActions = ({ onSend, user }) => {
 
       const imageName = `${user._id || "unknown"}-${Date.now()}.jpg`;
       const storageRef = ref(storage, `images/${imageName}`);
-      console.log("  Uploading to Firebase with name:", imageName);
-      console.log("  Storage ref path:", storageRef.fullPath);
+      console.log("[v0] Uploading to Firebase with name:", imageName);
+      console.log("[v0] Storage ref path:", storageRef.fullPath);
 
-      console.log("  Starting Firebase upload...");
+      console.log("[v0] Starting Firebase upload...");
 
       // Create a promise that rejects after 60 seconds
       const timeoutPromise = new Promise((_, reject) => {
@@ -318,11 +328,11 @@ const CustomActions = ({ onSend, user }) => {
         timeoutPromise,
       ]);
 
-      console.log("  Upload successful, result:", uploadResult);
-      console.log("  Getting download URL...");
+      console.log("[v0] Upload successful, result:", uploadResult);
+      console.log("[v0] Getting download URL...");
 
       const downloadURL = await getDownloadURL(storageRef);
-      console.log("  Download URL received:", downloadURL);
+      console.log("[v0] Download URL received:", downloadURL);
 
       const messageObject = {
         _id: Math.random().toString(36).substring(7) + Date.now(),
@@ -335,23 +345,23 @@ const CustomActions = ({ onSend, user }) => {
         createdAt: new Date(),
       };
 
-      console.log("  Calling onSend with message object:", messageObject);
+      console.log("[v0] Calling onSend with message object:", messageObject);
       onSend([messageObject]);
-      console.log("  onSend called successfully");
+      console.log("[v0] onSend called successfully");
     } catch (error) {
-      console.error("  Upload failed with error:", error);
-      console.error("  Error name:", error.name);
-      console.error("  Error message:", error.message);
-      console.error("  Error stack:", error.stack);
+      console.error("[v0] Upload failed with error:", error);
+      console.error("[v0] Error name:", error.name);
+      console.error("[v0] Error message:", error.message);
+      console.error("[v0] Error stack:", error.stack);
 
-      console.log("  Checking Firebase auth state...");
+      console.log("[v0] Checking Firebase auth state...");
       import("../services/firebase").then(({ auth }) => {
         console.log(
-          "  Current user:",
+          "[v0] Current user:",
           auth.currentUser ? "authenticated" : "not authenticated"
         );
         if (auth.currentUser) {
-          console.log("  User ID:", auth.currentUser.uid);
+          console.log("[v0] User ID:", auth.currentUser.uid);
         }
       });
 

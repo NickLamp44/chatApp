@@ -93,13 +93,7 @@ const MessageBubble = ({ currentMessage, user }) => {
             <View style={styles.mapContainer}>
               <Image
                 source={{
-                  uri: `https://tile.openstreetmap.org/cgi-bin/export?bbox=${
-                    currentMessage.location.longitude - 0.01
-                  },${currentMessage.location.latitude - 0.01},${
-                    currentMessage.location.longitude + 0.01
-                  },${
-                    currentMessage.location.latitude + 0.01
-                  }&scale=8000&format=png`,
+                  uri: `https://api.mapbox.com/styles/v1/mapbox/streets-v11/static/pin-s-l+000(${currentMessage.location.longitude},${currentMessage.location.latitude})/${currentMessage.location.longitude},${currentMessage.location.latitude},14/280x160?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw`,
                 }}
                 style={styles.mapImage}
                 onError={() => {

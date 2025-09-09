@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from "react";
+"use client";
+
+import { useState, useEffect } from "react";
 import {
   StyleSheet,
   View,
@@ -8,11 +10,19 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
+  Modal,
 } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "../services/firebase";
+import ColorPicker, {
+  Panel1,
+  Swatches,
+  Preview,
+  OpacitySlider,
+  HueSlider,
+} from "reanimated-color-picker";
 
 import RoomSelection from "../components/roomSelector";
 import NavMenu from "../components/navMenu";
@@ -28,8 +38,8 @@ const HomeScreen = () => {
   const [isGuest, setIsGuest] = useState(false);
   const [backgroundColor, setBackgroundColor] = useState("#090C08");
   const [selectedRoomID, setSelectedRoomID] = useState(null);
+  const [showColorPicker, setShowColorPicker] = useState(false);
 
-  // Load user from params or AsyncStorage
   useEffect(() => {
     const loadUser = async () => {
       if (route.params) {
@@ -56,7 +66,6 @@ const HomeScreen = () => {
     loadUser();
   }, [route.params]);
 
-  // Firebase listener (only if not guest)
   useEffect(() => {
     if (isGuest) return;
 
@@ -108,11 +117,15 @@ const HomeScreen = () => {
 
     await AsyncStorage.setItem("user", JSON.stringify(userData));
 
-    // ✅ Pass only serializable user data
     navigation.replace("Chat", {
       chatRoom_ID: selectedRoomID,
       user: userData,
     });
+  };
+
+  const onSelectColor = ({ hex }) => {
+    setBackgroundColor(hex);
+    setShowColorPicker(false);
   };
 
   const colors = ["#090C08", "#474056", "#8A95A5", "#B9C6AE"];
@@ -159,11 +172,50 @@ const HomeScreen = () => {
             ))}
           </View>
 
+          <TouchableOpacity
+            style={styles.customColorButton}
+            onPress={() => setShowColorPicker(true)}
+          >
+            <Text style={styles.customColorButtonText}>More Colors</Text>
+          </TouchableOpacity>
+
           <TouchableOpacity style={styles.button} onPress={proceedToChat}>
             <Text style={styles.buttonText}>Start Chatting</Text>
           </TouchableOpacity>
         </View>
       </View>
+
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={showColorPicker}
+        onRequestClose={() => setShowColorPicker(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.colorPickerContainer}>
+            <Text style={styles.colorPickerTitle}>Choose Custom Color</Text>
+
+            <ColorPicker
+              value={backgroundColor}
+              onComplete={onSelectColor}
+              style={styles.colorPicker}
+            >
+              <Panel1 />
+              <HueSlider />
+              <OpacitySlider />
+              <Preview />
+              <Swatches />
+            </ColorPicker>
+
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => setShowColorPicker(false)}
+            >
+              <Text style={styles.closeButtonText}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </KeyboardAvoidingView>
   );
 };
@@ -233,6 +285,55 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "600",
+  },
+  customColorButton: {
+    backgroundColor: "#007AFF",
+    padding: 12,
+    borderRadius: 8,
+    alignItems: "center",
+    width: "100%",
+    marginBottom: 15,
+  },
+  customColorButtonText: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "500",
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.5)",
+  },
+  colorPickerContainer: {
+    backgroundColor: "white",
+    borderRadius: 20,
+    padding: 20,
+    width: "85%",
+    maxWidth: 400,
+    alignItems: "center",
+  },
+  colorPickerTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#333",
+    marginBottom: 20,
+  },
+  colorPicker: {
+    width: "100%",
+    marginBottom: 20,
+  },
+  closeButton: {
+    backgroundColor: "#757083",
+    padding: 12,
+    borderRadius: 8,
+    alignItems: "center",
+    width: "100%",
+  },
+  closeButtonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "500",
   },
 });
 
