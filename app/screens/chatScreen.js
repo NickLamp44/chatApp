@@ -34,6 +34,7 @@ const ChatScreen = ({ route, navigation }) => {
   const [chatRoomTitle, setChatRoomTitle] = useState(
     route.params?.chatRoom_ID || "Chat Room"
   );
+  const [backgroundColor, setBackgroundColor] = useState("#fff");
 
   useEffect(() => {
     const loadUser = async () => {
@@ -46,6 +47,8 @@ const ChatScreen = ({ route, navigation }) => {
         }
 
         const userData = JSON.parse(saved);
+
+        setBackgroundColor(userData.backgroundColor || "#fff");
 
         setUser({
           _id: userData.userID,
@@ -130,9 +133,9 @@ const ChatScreen = ({ route, navigation }) => {
   if (!user) return null; // Still loading user
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: "#fff" }]}>
+    <SafeAreaView style={styles.container}>
       {/* Header */}
-      <View style={[styles.header, { backgroundColor: "#fff" }]}>
+      <View style={styles.header}>
         <View style={styles.headerContent}>
           <TouchableOpacity
             style={styles.backButton}
@@ -147,7 +150,7 @@ const ChatScreen = ({ route, navigation }) => {
       </View>
 
       {/* Chat UI */}
-      <View style={styles.chatContainer}>
+      <View style={[styles.chatContainer, { backgroundColor }]}>
         <GiftedChat
           messages={messages}
           onSend={onSend}
@@ -188,12 +191,14 @@ const styles = StyleSheet.create({
     flex: 1,
     height: "100vh",
     maxHeight: "100vh",
+    backgroundColor: "#fff", // Keep SafeAreaView white so header stays white
   },
   chatContainer: {
     flex: 1,
     minHeight: 0, // Prevents flex child from overflowing
   },
   header: {
+    backgroundColor: "#fff",
     paddingTop: Platform.OS === "android" ? 40 : 10,
     paddingHorizontal: 16,
     paddingBottom: 12,

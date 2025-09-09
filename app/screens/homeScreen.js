@@ -39,6 +39,7 @@ const HomeScreen = () => {
   const [backgroundColor, setBackgroundColor] = useState("#090C08");
   const [selectedRoomID, setSelectedRoomID] = useState(null);
   const [showColorPicker, setShowColorPicker] = useState(false);
+  const [tempColor, setTempColor] = useState("#090C08");
 
   useEffect(() => {
     const loadUser = async () => {
@@ -123,9 +124,18 @@ const HomeScreen = () => {
     });
   };
 
-  const onSelectColor = ({ hex }) => {
-    setBackgroundColor(hex);
+  const onColorChange = ({ hex }) => {
+    setTempColor(hex);
+  };
+
+  const confirmColorSelection = () => {
+    setBackgroundColor(tempColor);
     setShowColorPicker(false);
+  };
+
+  const openColorPicker = () => {
+    setTempColor(backgroundColor);
+    setShowColorPicker(true);
   };
 
   const colors = ["#090C08", "#474056", "#8A95A5", "#B9C6AE"];
@@ -174,7 +184,7 @@ const HomeScreen = () => {
 
           <TouchableOpacity
             style={styles.customColorButton}
-            onPress={() => setShowColorPicker(true)}
+            onPress={openColorPicker}
           >
             <Text style={styles.customColorButtonText}>More Colors</Text>
           </TouchableOpacity>
@@ -191,13 +201,21 @@ const HomeScreen = () => {
         visible={showColorPicker}
         onRequestClose={() => setShowColorPicker(false)}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.colorPickerContainer}>
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setShowColorPicker(false)}
+        >
+          <TouchableOpacity
+            style={styles.colorPickerContainer}
+            activeOpacity={1}
+            onPress={() => {}}
+          >
             <Text style={styles.colorPickerTitle}>Choose Custom Color</Text>
 
             <ColorPicker
-              value={backgroundColor}
-              onComplete={onSelectColor}
+              value={tempColor}
+              onChange={onColorChange}
               style={styles.colorPicker}
             >
               <Panel1 />
@@ -207,14 +225,23 @@ const HomeScreen = () => {
               <Swatches />
             </ColorPicker>
 
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={() => setShowColorPicker(false)}
-            >
-              <Text style={styles.closeButtonText}>Close</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
+            <View style={styles.buttonRow}>
+              <TouchableOpacity
+                style={styles.selectButton}
+                onPress={confirmColorSelection}
+              >
+                <Text style={styles.selectButtonText}>Select Color</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.closeButton}
+                onPress={() => setShowColorPicker(false)}
+              >
+                <Text style={styles.closeButtonText}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+          </TouchableOpacity>
+        </TouchableOpacity>
       </Modal>
     </KeyboardAvoidingView>
   );
@@ -323,17 +350,29 @@ const styles = StyleSheet.create({
     width: "100%",
     marginBottom: 20,
   },
+  buttonRow: {
+    flexDirection: "row",
+    width: "100%",
+    gap: 10,
+  },
+  selectButton: {
+    backgroundColor: "#007AFF",
+    padding: 12,
+    borderRadius: 8,
+    alignItems: "center",
+    flex: 1,
+  },
+  selectButtonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "500",
+  },
   closeButton: {
     backgroundColor: "#757083",
     padding: 12,
     borderRadius: 8,
     alignItems: "center",
-    width: "100%",
-  },
-  closeButtonText: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "500",
+    flex: 1,
   },
 });
 
