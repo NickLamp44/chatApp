@@ -157,7 +157,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   input: {
-    width: "90%",
+    width: "80%",
     backgroundColor: "#fff",
     marginBottom: 15,
     fontSize: 16,
