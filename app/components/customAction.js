@@ -37,8 +37,7 @@ const CustomActions = ({ onSend, user }) => {
       async (buttonIndex) => {
         try {
           if (buttonIndex === 0) await pickImage();
-          if (buttonIndex === 1) await takePhoto();
-          if (buttonIndex === 2) await getLocation();
+          if (buttonIndex === 1) await getLocation();
         } catch (error) {
           console.error("Action failed:", error);
           Alert.alert("Error", "Action failed. Please try again.");

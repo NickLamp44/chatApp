@@ -1,7 +1,14 @@
-const { getDefaultConfig } = require("@expo/metro-config");
+const { getDefaultConfig } = require("expo/metro-config");
 
-const defaultConfig = getDefaultConfig(__dirname);
+const config = getDefaultConfig(__dirname);
 
-defaultConfig.resolver.blacklistRE = /react-native-maps\/lib\/.*/;
+config.resolver.alias = {
+  ...config.resolver.alias,
+  "react-native-keyboard-controller": require.resolve(
+    "./keyboard-controller-web-shim.js"
+  ),
+};
 
-module.exports = defaultConfig;
+config.resolver.platforms = ["web", "ios", "android", "native"];
+
+module.exports = config;
