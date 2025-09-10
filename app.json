@@ -19,7 +19,8 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.nicklamp.chatapp"
     },
     "android": {
       "package": "com.nicklamp.chatapp",
