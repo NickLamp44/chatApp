@@ -1,5 +1,3 @@
-"use client";
-
 import { useEffect, useRef, useState } from "react";
 import { Alert } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";

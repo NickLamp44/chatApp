@@ -1,4 +1,3 @@
-"use client";
 import { View, Text, TouchableOpacity, StyleSheet, Alert } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { logoutUser } from "../services/firebaseAuth";
@@ -9,12 +8,12 @@ export default function NavMenu() {
 
   const handleLogout = async () => {
     try {
-      await logoutUser(); 
-      await AsyncStorage.clear(); 
+      await logoutUser();
+      await AsyncStorage.clear();
       navigation.reset({
         index: 0,
         routes: [{ name: "Login" }],
-      }); 
+      });
     } catch (error) {
       Alert.alert("Logout Error", error.message);
     }

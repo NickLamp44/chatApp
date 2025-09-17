@@ -1,5 +1,3 @@
-"use client";
-
 import { View, Text, Image, StyleSheet } from "react-native";
 import { useState } from "react";
 
