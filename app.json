@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "chatApp",
+    "name": "circleup",
     "slug": "circleup",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -18,13 +18,15 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.nicklamp.circleup"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.nicklamp.circleup"
     },
     "web": {
       "favicon": "./assets/favicon.png",

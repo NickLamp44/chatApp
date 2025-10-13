@@ -258,7 +258,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 45,
     fontWeight: "600",
-    color: "#5d0707",
+    color: "#3a58c7",
     marginBottom: 40,
   },
   inputContainer: {
