@@ -8,8 +8,8 @@
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "platforms": [
-      "android",
-      "ios",
+      // "android",
+      // "ios",
       "web"
     ],
     "splash": {
