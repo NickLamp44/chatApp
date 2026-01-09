@@ -11,6 +11,7 @@ import {
   Platform,
   Alert,
   Modal,
+  ScrollView,
 } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -146,54 +147,60 @@ const HomeScreen = () => {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
       <NavMenu />
-      <View style={styles.contentContainer}>
-        <Text style={styles.title}>Welcome to Circle Up!</Text>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.centeredContainer}>
+          <Text style={styles.title}>Welcome to Circle Up!</Text>
 
-        <RoomSelection
-          navigation={navigation}
-          user={{ userID, name, email, profilePic }}
-          onRoomSelect={handleRoomSelect}
-        />
-
-        <View style={styles.inputContainer}>
-          {isGuest && (
-            <TextInput
-              style={styles.textInput}
-              value={name}
-              onChangeText={setName}
-              placeholder="Enter Your Name"
-              placeholderTextColor="#757083"
-              multiline
+          <View style={styles.cardContainer}>
+            <RoomSelection
+              navigation={navigation}
+              user={{ userID, name, email, profilePic }}
+              onRoomSelect={handleRoomSelect}
             />
-          )}
 
-          <Text style={styles.colorText}>Choose Background Color:</Text>
-          <View style={styles.colorContainer}>
-            {colors.map((color) => (
+            <View style={styles.inputContainer}>
+              {isGuest && (
+                <TextInput
+                  style={styles.textInput}
+                  value={name}
+                  onChangeText={setName}
+                  placeholder="Enter Your Name"
+                  placeholderTextColor="#757083"
+                />
+              )}
+
+              <Text style={styles.colorText}>Choose Background Color:</Text>
+              <View style={styles.colorContainer}>
+                {colors.map((color) => (
+                  <TouchableOpacity
+                    key={color}
+                    style={[
+                      styles.colorOption,
+                      { backgroundColor: color },
+                      backgroundColor === color && styles.selectedColor,
+                    ]}
+                    onPress={() => setBackgroundColor(color)}
+                  />
+                ))}
+              </View>
+
               <TouchableOpacity
-                key={color}
-                style={[
-                  styles.colorOption,
-                  { backgroundColor: color },
-                  backgroundColor === color && styles.selectedColor,
-                ]}
-                onPress={() => setBackgroundColor(color)}
-              />
-            ))}
+                style={styles.customColorButton}
+                onPress={openColorPicker}
+              >
+                <Text style={styles.customColorButtonText}>More Colors</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.button} onPress={proceedToChat}>
+                <Text style={styles.buttonText}>Start Chatting</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-
-          <TouchableOpacity
-            style={styles.customColorButton}
-            onPress={openColorPicker}
-          >
-            <Text style={styles.customColorButtonText}>More Colors</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.button} onPress={proceedToChat}>
-            <Text style={styles.buttonText}>Start Chatting</Text>
-          </TouchableOpacity>
         </View>
-      </View>
+      </ScrollView>
 
       <Modal
         animationType="slide"
@@ -248,82 +255,106 @@ const HomeScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  contentContainer: {
+  container: {
     flex: 1,
-    justifyContent: "flex-end",
+    backgroundColor: "#ebebeb",
+  },
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: "center",
     alignItems: "center",
-    paddingBottom: "20%",
+    paddingVertical: 40,
+    paddingHorizontal: 20,
+  },
+  centeredContainer: {
+    width: "100%",
+    maxWidth: 600,
+    alignItems: "center",
   },
   title: {
-    fontSize: 45,
-    fontWeight: "600",
+    fontSize: 32,
+    fontWeight: "700",
     color: "#3a58c7",
-    marginBottom: 40,
+    marginBottom: 24,
+    textAlign: "center",
+  },
+  cardContainer: {
+    backgroundColor: "#ffffff",
+    borderRadius: 16,
+    padding: 24,
+    width: "100%",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
   },
   inputContainer: {
-    backgroundColor: "white",
-    padding: 20,
-    borderRadius: 10,
-    width: "88%",
+    width: "100%",
     alignItems: "center",
+    marginTop: 20,
   },
   textInput: {
     width: "100%",
-    padding: 15,
-    borderWidth: 1,
-    borderColor: "#757083",
+    padding: 16,
+    borderWidth: 1.5,
+    borderColor: "#d1d5db",
+    borderRadius: 10,
     marginBottom: 20,
     fontSize: 16,
-    fontWeight: "300",
-    color: "#757083",
-    opacity: 0.8,
+    fontWeight: "400",
+    color: "#999",
+    backgroundColor: "#f9fafb",
   },
   colorText: {
     fontSize: 16,
-    fontWeight: "300",
-    color: "#757083",
-    marginBottom: 10,
+    fontWeight: "500",
+    color: "#4b5563",
+    marginBottom: 12,
+    alignSelf: "flex-start",
   },
   colorContainer: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    width: "80%",
+    justifyContent: "space-evenly",
+    width: "100%",
     marginBottom: 20,
+    gap: 12,
   },
   colorOption: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    borderWidth: 2,
+    borderColor: "#e5e7eb",
   },
   selectedColor: {
-    borderWidth: 3,
-    borderColor: "#000",
+    borderWidth: 4,
+    borderColor: "#3a58c7",
   },
   button: {
-    backgroundColor: "#757083",
-    padding: 15,
+    backgroundColor: "#3a58c7",
+    padding: 16,
     borderRadius: 10,
     alignItems: "center",
-    width: "100%",
-    marginVertical: 5,
+    width: "75%",
+    marginTop: "10%",
   },
   buttonText: {
-    color: "#FFFFFF",
-    fontSize: 16,
+    color: "#ffffff",
+    fontSize: 26,
     fontWeight: "600",
   },
   customColorButton: {
-    backgroundColor: "#007AFF",
-    padding: 12,
-    borderRadius: 8,
+    backgroundColor: "#606060",
+    padding: 14,
+    borderRadius: 10,
     alignItems: "center",
-    width: "100%",
-    marginBottom: 15,
+    width: "50%",
+    marginBottom: 12,
   },
   customColorButtonText: {
-    color: "#FFFFFF",
-    fontSize: 14,
+    color: "#ffffff",
+    fontSize: 15,
     fontWeight: "500",
   },
   modalOverlay: {
@@ -333,17 +364,22 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.5)",
   },
   colorPickerContainer: {
-    backgroundColor: "white",
+    backgroundColor: "#ffffff",
     borderRadius: 20,
-    padding: 20,
-    width: "85%",
-    maxWidth: 400,
+    padding: 24,
+    width: "90%",
+    maxWidth: 420,
     alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.25,
+    shadowRadius: 16,
+    elevation: 10,
   },
   colorPickerTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: "600",
-    color: "#333",
+    color: "#1f2937",
     marginBottom: 20,
   },
   colorPicker: {
@@ -353,26 +389,31 @@ const styles = StyleSheet.create({
   buttonRow: {
     flexDirection: "row",
     width: "100%",
-    gap: 10,
+    gap: 12,
   },
   selectButton: {
-    backgroundColor: "#007AFF",
-    padding: 12,
-    borderRadius: 8,
+    backgroundColor: "#919297",
+    padding: 14,
+    borderRadius: 10,
     alignItems: "center",
     flex: 1,
   },
   selectButtonText: {
-    color: "#FFFFFF",
+    color: "#ffffff",
     fontSize: 16,
-    fontWeight: "500",
+    fontWeight: "600",
   },
   closeButton: {
-    backgroundColor: "#757083",
-    padding: 12,
-    borderRadius: 8,
+    backgroundColor: "#6b7280",
+    padding: 14,
+    borderRadius: 10,
     alignItems: "center",
     flex: 1,
+  },
+  closeButtonText: {
+    color: "#ffffff",
+    fontSize: 16,
+    fontWeight: "600",
   },
 });
 

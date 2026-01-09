@@ -1,4 +1,6 @@
-import React, { useEffect, useState } from "react";
+"use client";
+
+import { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -84,7 +86,11 @@ export default function RoomSelection({ navigation, user, onRoomSelect }) {
   };
 
   if (loading) {
-    return <ActivityIndicator size="large" color="#444" />;
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#3a58c7" />
+      </View>
+    );
   }
 
   if (rooms.length === 0) {
@@ -102,20 +108,18 @@ export default function RoomSelection({ navigation, user, onRoomSelect }) {
       <FlatList
         data={rooms}
         keyExtractor={(item) => item.id}
+        style={styles.roomList}
         renderItem={({ item }) => (
           <TouchableOpacity
             style={[
               styles.roomCard,
-              selectedRoomID === item.chatRoom_ID && {
-                borderColor: "#444daf",
-                borderWidth: 2,
-              },
+              selectedRoomID === item.chatRoom_ID && styles.selectedRoomCard,
             ]}
             onPress={() => handleRoomPress(item)}
           >
             <Text style={styles.roomName}>{item.chatRoomName}</Text>
             <Text style={styles.roomInfo}>
-              {item.isPrivate ? "Private" : "Public"} |{" "}
+              {item.isPrivate ? "🔒 Private" : "🌐 Public"} •{" "}
               {item.members?.length || 0} Users
             </Text>
           </TouchableOpacity>
@@ -136,6 +140,7 @@ export default function RoomSelection({ navigation, user, onRoomSelect }) {
             <TextInput
               style={styles.modalInput}
               placeholder="Room Password"
+              placeholderTextColor="#9ca3af"
               secureTextEntry
               value={passwordInput}
               onChangeText={setPasswordInput}
@@ -166,57 +171,119 @@ export default function RoomSelection({ navigation, user, onRoomSelect }) {
 
 // STYLES
 const styles = StyleSheet.create({
-  container: { padding: 16 },
-  title: { fontSize: 20, fontWeight: "600", marginBottom: 10 },
-  roomCard: {
-    backgroundColor: "#eee",
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 10,
+  container: {
+    width: "100%",
   },
-  roomName: { fontSize: 18, fontWeight: "500" },
-  roomInfo: { fontSize: 14, color: "#666" },
-  createButton: {
-    backgroundColor: "#444daf",
-    padding: 12,
-    borderRadius: 8,
+  loadingContainer: {
+    padding: 40,
     alignItems: "center",
-    marginTop: 20,
   },
-  buttonText: { color: "#fff", fontWeight: "600" },
-  emptyContainer: { padding: 20, alignItems: "center" },
-  emptyText: { fontSize: 16, color: "#666" },
+  title: {
+    fontSize: 20,
+    fontWeight: "600",
+    marginBottom: 16,
+    color: "#1f2937",
+  },
+  roomList: {
+    maxHeight: 280,
+    marginBottom: 16,
+  },
+  roomCard: {
+    backgroundColor: "#f9fafb",
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 12,
+    borderWidth: 2,
+    borderColor: "#e5e7eb",
+  },
+  selectedRoomCard: {
+    borderColor: "#3a58c7",
+    backgroundColor: "#eff6ff",
+  },
+  roomName: {
+    fontSize: 17,
+    fontWeight: "600",
+    color: "#1f2937",
+    marginBottom: 4,
+  },
+  roomInfo: {
+    fontSize: 14,
+    color: "#6b7280",
+  },
+  createButton: {
+    alignSelf: "center",
+    width: "50%",
+    backgroundColor: "#3a58c7",
+    padding: 14,
+    borderRadius: 10,
+    alignItems: "center",
+  },
+  buttonText: {
+    color: "#ffffff",
+    fontWeight: "600",
+    fontSize: 15,
+  },
+  emptyContainer: {
+    padding: 40,
+    alignItems: "center",
+  },
+  emptyText: {
+    fontSize: 16,
+    color: "#6b7280",
+    textAlign: "center",
+  },
   modalContainer: {
     flex: 1,
     justifyContent: "center",
-    backgroundColor: "rgba(0,0,0,0.4)",
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.5)",
+    padding: 20,
   },
   modalContent: {
-    margin: 20,
-    backgroundColor: "#fff",
-    padding: 20,
-    borderRadius: 10,
+    width: "100%",
+    maxWidth: 400,
+    backgroundColor: "#ffffff",
+    padding: 24,
+    borderRadius: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.25,
+    shadowRadius: 16,
+    elevation: 10,
   },
-  modalTitle: { fontSize: 18, fontWeight: "600", marginBottom: 10 },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: "600",
+    marginBottom: 16,
+    color: "#1f2937",
+    textAlign: "center",
+  },
   modalInput: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 10,
+    borderWidth: 1.5,
+    borderColor: "#d1d5db",
+    padding: 14,
+    borderRadius: 10,
+    marginBottom: 16,
+    fontSize: 16,
+    backgroundColor: "#f9fafb",
+    color: "#1f2937",
   },
   modalButton: {
-    backgroundColor: "#444daf",
-    padding: 12,
-    borderRadius: 8,
+    backgroundColor: "#3a58c7",
+    padding: 14,
+    borderRadius: 10,
     alignItems: "center",
+    marginBottom: 10,
   },
-  modalButtonText: { color: "#fff", fontWeight: "600" },
+  modalButtonText: {
+    color: "#ffffff",
+    fontWeight: "600",
+    fontSize: 16,
+  },
   cancelButton: {
-    backgroundColor: "#aaa",
-    padding: 12,
-    borderRadius: 8,
+    backgroundColor: "#6b7280",
+    padding: 14,
+    borderRadius: 10,
     alignItems: "center",
-    marginTop: 10,
   },
 });

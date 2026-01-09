@@ -1,5 +1,6 @@
+"use client";
 
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   StyleSheet,
   Text,
@@ -8,11 +9,7 @@ import {
   Alert,
   TouchableOpacity,
 } from "react-native";
-import {
-  registerUser,
-  signInWithGoogle,
-  signInWithFacebook,
-} from "../services/firebaseAuth";
+import { registerUser, signInWithGoogle } from "../services/firebaseAuth";
 
 export default function SignUp({ navigation }) {
   const [email, setEmail] = useState("");
@@ -75,69 +72,52 @@ export default function SignUp({ navigation }) {
     }
   };
 
-  const handleFacebookSignIn = async () => {
-    try {
-      const user = await signInWithFacebook();
-      console.log("✅ Facebook Sign-in:", user.uid);
-      Alert.alert("✅ Success!", "Signed in with Facebook.");
-      navigation.replace("Main");
-    } catch (error) {
-      console.error("❌ Facebook Sign-in error:", error.message);
-      Alert.alert("❌ Facebook Sign-in Failed", error.message);
-    }
-  };
-
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Create New Account</Text>
+      <View style={styles.signupContainer}>
+        <Text style={styles.title}>Create New Account</Text>
 
-      <TextInput
-        style={styles.input}
-        placeholder="Enter email"
-        autoCapitalize="none"
-        keyboardType="email-address"
-        value={email}
-        onChangeText={setEmail}
-      />
+        <TextInput
+          style={styles.input}
+          placeholder="Enter email"
+          autoCapitalize="none"
+          keyboardType="email-address"
+          value={email}
+          onChangeText={setEmail}
+        />
 
-      <TextInput
-        style={styles.input}
-        placeholder="Enter username"
-        autoCapitalize="none"
-        value={userName}
-        onChangeText={setUserName}
-      />
+        <TextInput
+          style={styles.input}
+          placeholder="Enter username"
+          autoCapitalize="none"
+          value={userName}
+          onChangeText={setUserName}
+        />
 
-      <TextInput
-        style={styles.input}
-        placeholder="Enter password"
-        autoCapitalize="none"
-        secureTextEntry
-        value={password}
-        onChangeText={setPassword}
-      />
+        <TextInput
+          style={styles.input}
+          placeholder="Enter password"
+          autoCapitalize="none"
+          secureTextEntry
+          value={password}
+          onChangeText={setPassword}
+        />
 
-      <TouchableOpacity style={styles.button} onPress={onHandleSignUp}>
-        <Text style={styles.buttonText}>Sign Up</Text>
-      </TouchableOpacity>
+        <TouchableOpacity style={styles.button} onPress={onHandleSignUp}>
+          <Text style={styles.buttonText}>Sign Up</Text>
+        </TouchableOpacity>
 
-      <TouchableOpacity
-        style={[styles.button, styles.googleButton]}
-        onPress={handleGoogleSignIn}
-      >
-        <Text style={styles.buttonText}>Sign Up with Google</Text>
-      </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.button, styles.googleButton]}
+          onPress={handleGoogleSignIn}
+        >
+          <Text style={styles.buttonText}>Sign Up with Google</Text>
+        </TouchableOpacity>
 
-      {/* <TouchableOpacity
-        style={[styles.button, styles.facebookButton]}
-        onPress={handleFacebookSignIn}
-      >
-        <Text style={styles.buttonText}>Sign Up with Facebook</Text>
-      </TouchableOpacity> */}
-
-      <TouchableOpacity onPress={() => navigation.navigate("Login")}>
-        <Text style={styles.loginText}>Already have an account? Log in</Text>
-      </TouchableOpacity>
+        <TouchableOpacity onPress={() => navigation.navigate("Login")}>
+          <Text style={styles.loginText}>Already have an account? Log in</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
@@ -145,40 +125,55 @@ export default function SignUp({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
-    paddingTop: 50,
-    paddingHorizontal: 12,
+    backgroundColor: "#b1b1b1",
+    justifyContent: "center",
     alignItems: "center",
+    padding: 20,
+  },
+  signupContainer: {
+    backgroundColor: "#ffffff",
+    borderRadius: 16,
+    padding: 32,
+    width: "100%",
+    maxWidth: 480,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
   title: {
-    fontSize: 24,
-    fontWeight: "600",
-    color: "#444",
-    marginBottom: 20,
+    fontSize: 28,
+    fontWeight: "700",
+    color: "#333",
+    marginBottom: 32,
+    textAlign: "center",
   },
   input: {
-    width: "80%",
-    backgroundColor: "#fff",
-    marginBottom: 15,
+    width: "100%",
+    backgroundColor: "#f8f8f8",
+    marginBottom: 16,
     fontSize: 16,
+    color: "#999999",
     borderWidth: 1,
-    borderColor: "#333",
+    borderColor: "#e0e0e0",
     borderRadius: 8,
-    padding: 12,
+    padding: 14,
   },
   button: {
-    backgroundColor: "#6391b7",
-    padding: 15,
-    borderRadius: 10,
+    backgroundColor: "#3a58c7",
+    padding: 14,
+    borderRadius: 8,
     alignItems: "center",
-    width: "90%",
-    marginVertical: 5,
+    width: "100%",
+    marginVertical: 6,
   },
   googleButton: {
     backgroundColor: "#DB4437",
-  },
-  facebookButton: {
-    backgroundColor: "#4267B2",
   },
   buttonText: {
     color: "#FFFFFF",
@@ -186,8 +181,9 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   loginText: {
-    marginTop: 10,
-    fontSize: 16,
-    color: "#444",
+    marginTop: 16,
+    fontSize: 14,
+    color: "#3a58c7",
+    textDecorationLine: "underline",
   },
 });

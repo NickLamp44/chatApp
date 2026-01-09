@@ -79,7 +79,7 @@ const ChatScreen = ({ route, navigation }) => {
         setChatRoomTitle(roomDetails.chatRoomName || chatRoomID);
       } catch (error) {
         console.error("❌ Failed to fetch chat room details:", error);
-        setChatRoomTitle(chatRoomID); // Fallback to ID if fetch fails
+        setChatRoomTitle(chatRoomID);
       }
     };
 
@@ -130,11 +130,10 @@ const ChatScreen = ({ route, navigation }) => {
     setShowPicker(false);
   };
 
-  if (!user) return null; // Still loading user
+  if (!user) return null;
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerContent}>
           <TouchableOpacity
@@ -144,39 +143,41 @@ const ChatScreen = ({ route, navigation }) => {
           >
             <Text style={styles.backText}>← Back</Text>
           </TouchableOpacity>
-          <Text style={styles.chatTitle}>{chatRoomTitle}</Text>
+          <Text style={styles.chatTitle} numberOfLines={1}>
+            {chatRoomTitle}
+          </Text>
           <View style={styles.headerSpacer} />
         </View>
       </View>
 
-      {/* Chat UI */}
-      <View style={[styles.chatContainer, { backgroundColor }]}>
-        <GiftedChat
-          messages={messages}
-          onSend={onSend}
-          user={user}
-          renderBubble={(props) => <MessageBubble {...props} user={user} />}
-          renderAvatar={null}
-          renderActions={(props) => (
-            <CustomActions {...props} user={user} onSend={onSend} />
-          )}
-          renderMessage={(props) => (
-            <TouchableOpacity
-              activeOpacity={0.7}
-              onLongPress={() => {
-                setSelectedMessage(props.currentMessage);
-                setShowPicker(true);
-              }}
-            >
-              <MessageBubble {...props} user={user} />
-            </TouchableOpacity>
-          )}
-          keyboardShouldPersistTaps="handled"
-          messagesContainerStyle={styles.messagesContainer}
-        />
+      <View style={styles.chatWrapper}>
+        <View style={[styles.chatContainer, { backgroundColor }]}>
+          <GiftedChat
+            messages={messages}
+            onSend={onSend}
+            user={user}
+            renderBubble={(props) => <MessageBubble {...props} user={user} />}
+            renderAvatar={null}
+            renderActions={(props) => (
+              <CustomActions {...props} user={user} onSend={onSend} />
+            )}
+            renderMessage={(props) => (
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onLongPress={() => {
+                  setSelectedMessage(props.currentMessage);
+                  setShowPicker(true);
+                }}
+              >
+                <MessageBubble {...props} user={user} />
+              </TouchableOpacity>
+            )}
+            keyboardShouldPersistTaps="handled"
+            messagesContainerStyle={styles.messagesContainer}
+          />
+        </View>
       </View>
 
-      {/* Reactions */}
       <ReactBubble
         visible={showPicker}
         onSelect={handleAddReaction}
@@ -191,48 +192,66 @@ const styles = StyleSheet.create({
     flex: 1,
     height: "100vh",
     maxHeight: "100vh",
-    backgroundColor: "#fff", // Keep SafeAreaView white so header stays white
-  },
-  chatContainer: {
-    flex: 1,
-    minHeight: 0, // Prevents flex child from overflowing
+    backgroundColor: "#f5f5f5",
   },
   header: {
     backgroundColor: "#fff",
     paddingTop: Platform.OS === "android" ? 40 : 10,
     paddingHorizontal: 16,
-    paddingBottom: 12,
+    paddingBottom: 16,
     borderBottomWidth: 1,
     borderBottomColor: "#e0e0e0",
     flexShrink: 0,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 3,
   },
   headerContent: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    minHeight: 40,
+    minHeight: 44,
   },
   backButton: {
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    width: 80,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    width: 90,
+    justifyContent: "center",
   },
   backText: {
     fontSize: 16,
     color: "#007AFF",
-    fontWeight: "500",
+    fontWeight: "600",
   },
   chatTitle: {
     fontSize: 18,
-    fontWeight: "600",
-    color: "#333",
+    fontWeight: "700",
+    color: "#1a1a1a",
     textAlign: "center",
-    width: "auto",
-    minWidth: 100,
-    maxWidth: 200,
+    flex: 1,
+    paddingHorizontal: 8,
   },
   headerSpacer: {
-    width: 80,
+    width: 90,
+  },
+  chatWrapper: {
+    flex: 1,
+    alignItems: "center",
+    backgroundColor: "#f5f5f5",
+  },
+  chatContainer: {
+    flex: 1,
+    width: "100%",
+    maxWidth: 800,
+    minHeight: 0,
+    backgroundColor: "#fff",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
   messagesContainer: {
     padding: 16,

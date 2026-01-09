@@ -1,4 +1,6 @@
-import React, { useState } from "react";
+"use client";
+
+import { useState } from "react";
 import {
   View,
   Text,
@@ -7,6 +9,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   Alert,
+  ScrollView,
 } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { createChatRoom } from "../services/chatRoomService";
@@ -33,7 +36,7 @@ export default function CreateRoomScreen() {
     }
 
     const safeName = roomName.trim();
-    const roomID = uuidv4(); // ← Auto-generated Unique ID
+    const roomID = uuidv4();
 
     try {
       await createChatRoom(roomID, safeName, isPrivate, roomPassword || null);
@@ -54,62 +57,106 @@ export default function CreateRoomScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Create New Room</Text>
+    <ScrollView contentContainerStyle={styles.scrollContainer}>
+      <View style={styles.container}>
+        <View style={styles.card}>
+          <Text style={styles.title}>Create New Room</Text>
 
-      <TextInput
-        placeholder="Enter Room Name"
-        value={roomName}
-        onChangeText={setRoomName}
-        style={styles.input}
-      />
+          <TextInput
+            placeholder="Enter Room Name"
+            value={roomName}
+            onChangeText={setRoomName}
+            style={styles.input}
+          />
 
-      <View style={styles.privacyToggle}>
-        <Text style={styles.toggleText}>
-          {isPrivate ? "Private Room" : "Public Room"}
-        </Text>
-        <Switch value={isPrivate} onValueChange={setIsPrivate} />
+          <View style={styles.privacyToggle}>
+            <Text style={styles.toggleText}>
+              {isPrivate ? "Private Room" : "Public Room"}
+            </Text>
+            <Switch value={isPrivate} onValueChange={setIsPrivate} />
+          </View>
+
+          {isPrivate && (
+            <TextInput
+              placeholder="Set Room Password"
+              value={roomPassword}
+              onChangeText={setRoomPassword}
+              style={styles.input}
+              secureTextEntry
+            />
+          )}
+
+          <TouchableOpacity style={styles.button} onPress={handleCreateRoom}>
+            <Text style={styles.buttonText}>Create Room</Text>
+          </TouchableOpacity>
+        </View>
       </View>
-
-      {isPrivate && (
-        <TextInput
-          placeholder="Set Room Password"
-          value={roomPassword}
-          onChangeText={setRoomPassword}
-          style={styles.input}
-          secureTextEntry
-        />
-      )}
-
-      <TouchableOpacity style={styles.button} onPress={handleCreateRoom}>
-        <Text style={styles.buttonText}>Create Room</Text>
-      </TouchableOpacity>
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20, justifyContent: "center" },
-  title: { fontSize: 26, fontWeight: "700", marginBottom: 20 },
+  scrollContainer: {
+    flexGrow: 1,
+    backgroundColor: "#f5f5f5",
+  },
+  container: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  card: {
+    width: "100%",
+    maxWidth: 480,
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 32,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: "700",
+    marginBottom: 32,
+    textAlign: "center",
+    color: "#333",
+  },
   input: {
     borderWidth: 1,
-    borderColor: "#ccc",
-    padding: 15,
+    borderColor: "#ddd",
+    padding: 16,
     borderRadius: 8,
     marginBottom: 20,
+    fontSize: 16,
+    color: "#999",
+    backgroundColor: "#fafafa",
   },
   privacyToggle: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 30,
+    marginBottom: 24,
+    paddingVertical: 8,
   },
-  toggleText: { fontSize: 16 },
+  toggleText: {
+    fontSize: 16,
+    fontWeight: "500",
+    color: "#333",
+  },
   button: {
     backgroundColor: "#444daf",
-    padding: 15,
+    padding: 16,
     borderRadius: 8,
     alignItems: "center",
+    marginTop: 12,
   },
-  buttonText: { color: "#fff", fontWeight: "600" },
+  buttonText: {
+    color: "#fff",
+    fontWeight: "600",
+    fontSize: 16,
+  },
 });

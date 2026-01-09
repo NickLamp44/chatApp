@@ -101,45 +101,50 @@ export default function Login({ navigation }) {
   // ===== UI RENDER =====
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Welcome to Circle Up!</Text>
+      <View style={styles.loginContainer}>
+        <Text style={styles.title}>Welcome to Circle Up!</Text>
 
-      <TextInput
-        style={styles.input}
-        placeholder="Enter Email or Username"
-        autoCapitalize="none"
-        value={input}
-        onChangeText={setInput}
-      />
+        <TextInput
+          style={styles.input}
+          placeholder="Enter Email or Username"
+          autoCapitalize="none"
+          value={input}
+          onChangeText={setInput}
+        />
 
-      <TextInput
-        style={styles.input}
-        placeholder="Enter Password"
-        secureTextEntry
-        value={password}
-        onChangeText={setPassword}
-      />
+        <TextInput
+          style={styles.input}
+          placeholder="Enter Password"
+          secureTextEntry
+          value={password}
+          onChangeText={setPassword}
+        />
 
-      <TouchableOpacity
-        style={styles.loginButton}
-        onPress={handleStandardLogin}
-      >
-        <Text style={styles.buttonText}>Login</Text>
-      </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.loginButton}
+          onPress={handleStandardLogin}
+        >
+          <Text style={styles.buttonText}>Login</Text>
+        </TouchableOpacity>
 
-      <Text style={styles.orText}>OR</Text>
+        <Text style={styles.orText}>OR</Text>
 
-      <TouchableOpacity style={styles.googleButton} onPress={handleGoogleLogin}>
-        <AntDesign name="google" size={24} color="white" />
-        <Text style={styles.buttonText}>Sign in with Google</Text>
-      </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.googleButton}
+          onPress={handleGoogleLogin}
+        >
+          <AntDesign name="google" size={20} color="white" />
+          <Text style={styles.buttonText}>Sign in with Google</Text>
+        </TouchableOpacity>
 
-      <TouchableOpacity style={styles.button} onPress={handleGuestLogin}>
-        <Text style={styles.buttonText}>Continue as Guest</Text>
-      </TouchableOpacity>
+        <TouchableOpacity style={styles.button} onPress={handleGuestLogin}>
+          <Text style={styles.buttonText}>Continue as Guest</Text>
+        </TouchableOpacity>
 
-      <TouchableOpacity onPress={() => navigation.navigate("SignUp")}>
-        <Text style={styles.signupText}>Don't have an account? Sign up</Text>
-      </TouchableOpacity>
+        <TouchableOpacity onPress={() => navigation.navigate("SignUp")}>
+          <Text style={styles.signupText}>Don't have an account? Sign up</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
@@ -148,68 +153,87 @@ export default function Login({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
-    paddingTop: 50,
-    paddingHorizontal: 20,
+    backgroundColor: "#b1b1b1",
+    justifyContent: "center",
     alignItems: "center",
+    padding: 20,
+  },
+  loginContainer: {
+    backgroundColor: "#ffffff",
+    borderRadius: 16,
+    padding: 32,
+    width: "100%",
+    maxWidth: 480,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
   title: {
-    fontSize: 24,
-    fontWeight: "600",
-    color: "#444",
-    paddingBottom: 24,
+    fontSize: 28,
+    fontWeight: "700",
+    color: "#333",
+    marginBottom: 32,
+    textAlign: "center",
   },
   input: {
-    width: "80%",
-    backgroundColor: "#fff",
-    marginBottom: 15,
+    width: "100%",
+    backgroundColor: "#f8f8f8",
+    marginBottom: 16,
     fontSize: 16,
+    color:"#999",
     borderWidth: 1,
-    borderColor: "#333",
+    borderColor: "#e0e0e0",
     borderRadius: 8,
-    padding: 12,
+    padding: 14,
   },
   orText: {
-    fontSize: 16,
-    color: "#444",
-    marginVertical: 15,
+    fontSize: 14,
+    color: "#666",
+    marginVertical: 16,
     fontWeight: "600",
   },
   loginButton: {
-    backgroundColor: "#757083",
-    padding: 12,
+    backgroundColor: "#3a58c7",
+    padding: 14,
     borderRadius: 8,
-    width: "80%",
+    width: "100%",
     alignItems: "center",
-    marginBottom: 10,
+    marginBottom: 8,
   },
   button: {
     backgroundColor: "#757083",
-    padding: 12,
+    padding: 14,
     borderRadius: 8,
-    width: "80%",
+    width: "100%",
     alignItems: "center",
-    marginBottom: 10,
+    marginBottom: 8,
   },
   googleButton: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#DB4437",
-    padding: 12,
-    borderRadius: 8,
-    width: "80%",
     justifyContent: "center",
-    marginBottom: 10,
+    gap: 10,
+    backgroundColor: "#DB4437",
+    padding: 14,
+    borderRadius: 8,
+    width: "100%",
+    marginBottom: 8,
   },
   buttonText: {
     color: "white",
     fontSize: 16,
     fontWeight: "600",
-    marginLeft: 10,
   },
   signupText: {
-    marginTop: 10,
-    fontSize: 16,
-    color: "#444",
+    marginTop: 16,
+    fontSize: 14,
+    color: "#3a58c7",
+    textDecorationLine: "underline",
   },
 });
