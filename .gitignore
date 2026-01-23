@@ -35,4 +35,5 @@ yarn-error.*
 # typescript
 *.tsbuildinfo
 keyboard-controller-web-shim.js
+config/
 config/constants.js

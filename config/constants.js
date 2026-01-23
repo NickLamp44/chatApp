@@ -6,7 +6,7 @@ export const COLORS = {
 
 
 
-// CHAT V2 DB
+// CHAT V2 D
 export const firebaseConfig = {
   apiKey: "AIzaSyD7Cv8pE5gEI3xTfZBQnDyFINbB8p06aOY",
   authDomain: "chatv2-30d0f.firebaseapp.com",
